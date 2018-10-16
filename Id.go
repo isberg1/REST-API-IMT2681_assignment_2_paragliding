@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// proccesses GET for "/igcinfo/api/Igc/ID"
+// proccesses GET for "paragliding/api/Igc/ID"
 func returnID(w http.ResponseWriter, r *http.Request, s string) {
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
@@ -26,7 +26,7 @@ func parseFile(URL string) (Meta, error) {
 	if err != nil {
 		return Meta{}, err
 	}
-
+	// todo "track_src_url": <the original URL used to upload the track, ie. the URL used with POST>
 	// return a Meta struct with relevant data
 	temp := track.Task.Distance()
 	distance := int(temp)
@@ -39,7 +39,7 @@ func parseFile(URL string) (Meta, error) {
 		nil
 }
 
-// processes GET for url "/igcinfo/api/Igc/ID/feild"
+// processes GET for url "paragliding/api/Igc/ID/feild"
 func returnField(w http.ResponseWriter, r *http.Request, s []string) {
 	// checks if http method and id(s) is valid
 	if !validateURL(w, r, s[0]) {

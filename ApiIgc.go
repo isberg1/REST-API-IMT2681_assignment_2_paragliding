@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// responds to URL: "/igcinfo/api/Igc/*"
+// responds to URL: "/paragliding/api/Igc/*"
 func apiIgc(w http.ResponseWriter, r *http.Request) {
 	// process url
 	message := r.URL.Path
@@ -22,11 +22,11 @@ func apiIgc(w http.ResponseWriter, r *http.Request) {
 	}
 	// respond to various url's
 	switch len(a) {
-	case 3: // GET and POST for "/igcinfo/api/Igc/"
+	case 3: // GET and POST for "/paragliding/api/Igc/"
 		selectMethodForAPIIgc(w, r)
-	case 4: // GET for "/igcinfo/api/Igc/ID"
+	case 4: // GET for "/paragliding/api/Igc/ID"
 		returnID(w, r, a[3])
-	case 5: // GET for "/igcinfo/api/Igc/ID/field"
+	case 5: // GET for "/paragliding/api/Igc/ID/field"
 		returnField(w, r, a[3:])
 	default: // anything else
 		// send 404 error
@@ -34,7 +34,7 @@ func apiIgc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//processes http Methods for url "/igcinfo/api/Igc/"
+//processes http Methods for url "/paragliding/api/Igc/"
 func selectMethodForAPIIgc(w http.ResponseWriter, r *http.Request) {
 	// process method type and call appropriate response function
 	switch r.Method {
@@ -47,7 +47,7 @@ func selectMethodForAPIIgc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// processes POST content for url "/igcinfo/api/Igc/"
+// processes POST content for url "/paragliding/api/Igc/"
 func postFile(w http.ResponseWriter, r *http.Request) {
 	//read the POST body content
 	content, err := ioutil.ReadAll(r.Body)
@@ -98,7 +98,7 @@ func getUniqueID() string {
 	return idPrefix + strconv.Itoa(counter)
 }
 
-// processes GET content for url "/igcinfo/api/Igc/"
+// processes GET content for url "/paragliding/api/Igc/"
 func getFiles(w http.ResponseWriter) {
 	//set http header content-type
 	http.Header.Add(w.Header(), "content-type", "application/json")

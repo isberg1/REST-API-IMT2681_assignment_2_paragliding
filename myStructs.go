@@ -1,6 +1,6 @@
 package main
 
-// GetIgcinfoAPI used for responding to url: "/igcinfo/api/"
+// GetIgcinfoAPI used for responding to url: "paragliding/api/"
 type GetIgcinfoAPI struct {
 	Uptime  string `json:"uptime"`
 	Info    string `json:"info"`

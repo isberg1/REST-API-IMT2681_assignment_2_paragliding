@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -58,29 +57,13 @@ func getVersion() string {
 	return version
 }
 
-// responds to URL: "/igcinfo/api/"
+// responds to URL: "/paragliding/api/"
 func api(w http.ResponseWriter, r *http.Request) {
-	// process url
-	message := r.URL.Path
-	message = strings.TrimPrefix(message, "/")
-	a := strings.Split(message, "/")
 
-	//check if there are rubbis URL section after /api/
-	if len(a) >= 3 && a[2] != "" {
-		http.NotFound(w, r)
-		return
-	}
-	// process http method
-	// if GET method is used
-	if r.Method == http.MethodGet {
-		//set http header content-type
-		http.Header.Add(w.Header(), "content-type", "application/json")
-		//get relevant info
-		info := GetIgcinfoAPI{Uptime: getUptime(), Info: infoSting, Version: getVersion()}
-		//convert info to json and write back to the client
-		json.NewEncoder(w).Encode(&info)
-	} else {
-		// if method is anything else
-		http.Error(w, "illegal method", http.StatusMethodNotAllowed)
-	}
+	//set http header content-type
+	http.Header.Add(w.Header(), "content-type", "application/json")
+	//get relevant info
+	info := GetIgcinfoAPI{Uptime: getUptime(), Info: infoSting, Version: getVersion()}
+	//convert info to json and write back to the client
+	json.NewEncoder(w).Encode(&info)
 }

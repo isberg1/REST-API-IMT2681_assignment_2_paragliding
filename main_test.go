@@ -15,11 +15,11 @@ import (
 )
 
 const localProjectURLroot = "http://localhost:8080/"
-const localProjectURLbase = "http://localhost:8080/igcinfo/"
-const localProjectURLinfo1 = "http://localhost:8080/igcinfo/api"
-const localProjectURLinfo2 = "http://localhost:8080/igcinfo/api/"
-const localProjectURLarray1 = "http://localhost:8080/igcinfo/api/igc/"
-const localProjectURLarray2 = "http://localhost:8080/igcinfo/api/igc"
+const localProjectURLbase = "http://localhost:8080/paragliding/"
+const localProjectURLinfo1 = "http://localhost:8080/paragliding/api"
+const localProjectURLinfo2 = "http://localhost:8080/paragliding/api/"
+const localProjectURLarray1 = "http://localhost:8080/paragliding/api/igc/"
+const localProjectURLarray2 = "http://localhost:8080/paragliding/api/igc"
 const validIgcURL1 = "http://skypolaris.org/wp-content/uploads/IGS%20Files/Madrid%20to%20Jerez.igc"
 const validIgcURL2 = "https://raw.githubusercontent.com/marni/goigc/master/testdata/optimize-long-flight-1.igc"
 
@@ -116,7 +116,14 @@ func Test_igcinfoapi_local(t *testing.T) {
 
 // tries to post at an invalid URL
 func Test_PostAtInvalidURL(t *testing.T) {
-	expected := http.StatusMethodNotAllowed
+	expected := make([]int, 0)
+
+	expected = append(expected,
+		http.StatusMethodNotAllowed,
+		http.StatusMethodNotAllowed,
+		http.StatusNotFound,
+		http.StatusNotFound,
+	)
 
 	temp := make([]string, 0)
 	temp = append(
@@ -132,13 +139,13 @@ func Test_PostAtInvalidURL(t *testing.T) {
 		t.Error("error marshaling into json")
 	}
 	// iterate over slice with URL's
-	for _, res := range temp {
+	for nr, res := range temp {
 		post, err := http.Post(res, contentType, bytes.NewBuffer(jsonVar))
 		if err != nil {
 			t.Error("error unable to POST for:", res)
 		}
 		defer post.Body.Close()
-		if post.StatusCode != expected {
+		if post.StatusCode != expected[nr] {
 			t.Error("error illegal POST permitted form: ", res, post.StatusCode)
 		}
 	}

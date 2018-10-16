@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"strings"
@@ -37,24 +38,45 @@ var GlobalDebug = false
 //________________________________________________________________________
 
 func main() {
-	// handlerfuctions for general URL's
-	http.HandleFunc("/", all)
-	// the 2 almost identical handlerfunctions below are needed to  fix som buggy
-	// behavior regarding http POST being permitted when it shouldn't.
-	http.HandleFunc("/igcinfo/api", api)
-	http.HandleFunc("/igcinfo/api/", api)
 
-	http.HandleFunc("/igcinfo/api/igc", apiIgc)
-	http.HandleFunc("/igcinfo/api/igc/", apiIgc)
+	r := mux.NewRouter()
+	// Routes consist of a path and a handler function.
+	r.HandleFunc("/", all)
 
-	http.HandleFunc("/igcinfo/api/drop_table", dropTable)
-	http.HandleFunc("/igcinfo/api/drop_table/", dropTable)
+	r.HandleFunc("/paragliding/{api:api[/]?}", api).Methods("GET")
+	r.HandleFunc("/paragliding/api/{igc:igc[/]?}", apiIgc).Methods("GET")
+	r.HandleFunc("/paragliding/api/{igc:igc[/]?}", apiIgc).Methods("POST")
+	r.HandleFunc("/paragliding/api/igc/{id:"+idPrefix+"[1-9]+[/]?}", apiIgc).Methods("GET")
+	r.HandleFunc("/paragliding/api/igc/{id:"+idPrefix+"[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}", apiIgc).Methods("GET")
+	// todo <track_src_url> for track_src_url
+	//GET /api/ticker/latest
+	r.HandleFunc("/api/ticker/{latest:latest[/]?}", apiTtickerLatest).Methods("GET")
+	//GET /api/ticker/
+	r.HandleFunc("/api/{ticker:ticker[/]?}", apiTticker).Methods("GET")
+	//GET /api/ticker/<timestamp>
+	r.HandleFunc("/api/{timestamp}{slash:[/]?}", apiTimestamp).Methods("GET")
 
+	//POST /api/webhook/new_track/
+	r.HandleFunc("/api/webhook/new_track[/]?}", apiWebhookNew_track).Methods("POST")
+	//GET /api/webhook/new_track/<webhook_id>
+	r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", apiWebhookNew_trackWebhook_id).Methods("GET")
+	//DELETE /api/webhook/new_track/<webhook_id>
+	r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", delApiWebhookNew_trackWebhook_id).Methods("DELETE")
+
+	//GET /admin/api/tracks_count
+	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminApiTracks_count).Methods("GET")
+	//DELETE /admin/api/tracks
+	r.HandleFunc("/admin/api/{track:tracks[/]?}", apiTticker).Methods("DELETE")
+	/*
+
+		http.HandleFunc("/paragliding/api/drop_table", dropTable)
+		http.HandleFunc("/paragliding/api/drop_table/", dropTable)
+	*/
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		panic(err)
 	}
 }
@@ -72,7 +94,7 @@ func debug(w http.ResponseWriter, s string) {
 	}
 }
 
-// handels URL for "/igcinfo/api/drop_table/"
+// handels URL for "/paragliding/api/drop_table/"
 func dropTable(w http.ResponseWriter, r *http.Request) {
 	// process url
 	message := r.URL.Path
