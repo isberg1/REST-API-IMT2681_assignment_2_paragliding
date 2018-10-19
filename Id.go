@@ -3,34 +3,53 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/marni/goigc"
 	"net/http"
+	"sync"
+	"time"
 )
 
 // proccesses GET for "paragliding/api/Igc/ID"
-func returnID(w http.ResponseWriter, r *http.Request, s string) {
+func returnID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
-	// checks if http method and id(s) is valid
-	if !validateURL(w, r, s) {
+
+	igcStruct, ok := MgoDB.Get(vars["Id"])
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	simpleIgcStruct := SimpleMeta{
+		HDate:       igcStruct.HDate,
+		Pilot:       igcStruct.Pilot,
+		Glider:      igcStruct.Glider,
+		GliderID:    igcStruct.GliderID,
+		TrackLength: igcStruct.TrackLength,
+	}
+
 	// return IGC meta in json format for ID 's'
-	json.NewEncoder(w).Encode(IgcMap[s])
+	json.NewEncoder(w).Encode(simpleIgcStruct)
 }
 
 // converts URL string into i Meta struct
-func parseFile(URL string) (Meta, error) {
+func parseFile(URLfile string) (Meta, error) {
 	// extract IGC data form URL
-	track, err := igc.ParseLocation(URL)
+	track, err := igc.ParseLocation(URLfile)
 	if err != nil {
 		return Meta{}, err
 	}
-	// todo "track_src_url": <the original URL used to upload the track, ie. the URL used with POST>
 	// return a Meta struct with relevant data
 	temp := track.Task.Distance()
 	distance := int(temp)
+
 	return Meta{
+			Id:          getUniqueID(),
+			TimeStamp:   getTimestamp(),
+			URL:         URLfile,
 			HDate:       track.Date.String(), // alternativ: "track.Header.Date.String()"
 			Pilot:       track.Pilot,
 			Glider:      track.GliderType,
@@ -40,45 +59,40 @@ func parseFile(URL string) (Meta, error) {
 }
 
 // processes GET for url "paragliding/api/Igc/ID/feild"
-func returnField(w http.ResponseWriter, r *http.Request, s []string) {
-	// checks if http method and id(s) is valid
-	if !validateURL(w, r, s[0]) {
-		return
-	}
-	// convert relevant Meta struct to json
-	jsonString, err := json.Marshal(IgcMap[s[0]])
-	if err != nil {
-		http.Error(w, "server Error", http.StatusInternalServerError)
-		return
-	}
-	// convert json to map
-	// (map set to string -> interface{} for easy refactoring purposes
-	var temp map[string]interface{}
-	json.Unmarshal(jsonString, &temp)
+func returnField(w http.ResponseWriter, r *http.Request) {
 
-	// check if requested field from URL("S[1]") exist,
-	// and if so return value to client
-	if value, ok := temp[s[1]]; ok {
-		http.Header.Add(w.Header(), "content-type", "text/plain")
-		fmt.Fprintln(w, value)
+	vars := mux.Vars(r)
+
+	// set response type for http header
+	http.Header.Add(w.Header(), "content-type", "application/json")
+
+	igcStruct, ok := MgoDB.Get(vars["Id"])
+	if !ok {
+		fmt.Println("from not found")
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	// return key not found to client
-	http.NotFound(w, r)
+
+	switch vars["field"] {
+	case "pilot":
+		fmt.Fprintln(w, igcStruct.Pilot)
+	case "h_date":
+		fmt.Fprintln(w, igcStruct.HDate)
+	case "glider":
+		fmt.Fprintln(w, igcStruct.Glider)
+	case "glider_id":
+		fmt.Fprintln(w, igcStruct.GliderID)
+	case "track_length":
+		fmt.Fprintln(w, igcStruct.TrackLength)
+	}
+
 }
 
-// checks if method
-func validateURL(w http.ResponseWriter, r *http.Request, s string) bool {
-	//  wrong method at this URL
-	if r.Method != http.MethodGet {
-		http.Error(w, "invalid method", http.StatusMethodNotAllowed)
-		return false
-	}
-	// if ID does not exist
-	if _, ok := IgcMap[s]; !ok {
-		http.Error(w, "", http.StatusNotFound)
-		return false
-	}
-	// return true if everything is ok
-	return true
+func getTimestamp() int64 {
+	var mutex = &sync.Mutex{}
+	mutex.Lock()
+	timeStamp := time.Now().UnixNano() / 1000000
+	mutex.Unlock()
+
+	return timeStamp
 }

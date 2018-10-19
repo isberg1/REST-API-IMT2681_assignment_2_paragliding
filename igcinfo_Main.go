@@ -14,7 +14,7 @@ import (
 // application description string, used to inform client
 const infoSting = "Service for IGC tracks."
 
-// used to make uniqe id for IgcMap
+// used to make uniqe Id for IgcMap
 const idPrefix = "IGC_file_"
 
 // used as default value for version nr
@@ -22,6 +22,9 @@ const unavalabeVersinNr = "Unavalable"
 
 // default port
 const defaultPort = "8080"
+
+// MgnDB is the global
+var MgoDB = MongoDbStruct{}
 
 // IgcMap global variable to store all IGC files
 var IgcMap = make(map[string]Meta)
@@ -39,18 +42,24 @@ var GlobalDebug = false
 
 func main() {
 
+	MgoDB.Init("test", "mainCollection", "mongodb://127.0.0.1:27017")
+
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
 	r.HandleFunc("/", all)
 
 	r.HandleFunc("/paragliding/{api:api[/]?}", api).Methods("GET")
-	r.HandleFunc("/paragliding/api/{igc:igc[/]?}", apiIgc).Methods("GET")
-	r.HandleFunc("/paragliding/api/{igc:igc[/]?}", apiIgc).Methods("POST")
-	r.HandleFunc("/paragliding/api/igc/{id:"+idPrefix+"[1-9]+[/]?}", apiIgc).Methods("GET")
-	r.HandleFunc("/paragliding/api/igc/{id:"+idPrefix+"[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}", apiIgc).Methods("GET")
-	// todo <track_src_url> for track_src_url
+	r.HandleFunc("/paragliding/api/{track:track[/]?}", getFiles).Methods("GET")
+	r.HandleFunc("/paragliding/api/{track:track[/]?}", postFile).Methods("POST")
+	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}", returnID).Methods("GET")
+	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/", returnID).Methods("GET")
+	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}", returnField).Methods("GET")
+	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}/", returnField).Methods("GET")
 	//GET /api/ticker/latest
-	r.HandleFunc("/api/ticker/{latest:latest[/]?}", apiTtickerLatest).Methods("GET")
+	r.HandleFunc("/paragliding/api/ticker/{latest:latest[/]?}", apiTtickerLatest).Methods("GET")
+	/*/api/ticker/latest
+	// todo <track_src_url> for track_src_url
+
 	//GET /api/ticker/
 	r.HandleFunc("/api/{ticker:ticker[/]?}", apiTticker).Methods("GET")
 	//GET /api/ticker/<timestamp>
@@ -72,6 +81,7 @@ func main() {
 		http.HandleFunc("/paragliding/api/drop_table", dropTable)
 		http.HandleFunc("/paragliding/api/drop_table/", dropTable)
 	*/
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort

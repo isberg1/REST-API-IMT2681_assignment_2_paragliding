@@ -14,11 +14,22 @@ type InputURL struct {
 
 // ResponsID used as conformation message for responding to client http POST
 type ResponsID struct {
-	ID string `json:"id"`
+	ID string `json:"Id"`
 }
 
 // Meta used for storing IGC data from http POST in data structure IgcMap
 type Meta struct {
+	Id          string `json:"id"`
+	TimeStamp   int64  `json:"time_stamp"`
+	URL         string `json:"url"`
+	HDate       string `json:"h_date"`       //"HDate": <date from File Header, H-record>,
+	Pilot       string `json:"pilot"`        //"pilot": <pilot>,
+	Glider      string `json:"glider"`       //"glider": <glider>,
+	GliderID    string `json:"glider_id"`    //"glider_id": <glider_id>,
+	TrackLength int    `json:"track_length"` //"track_length": <calculated total track length>
+}
+
+type SimpleMeta struct {
 	HDate       string `json:"h_date"`       //"HDate": <date from File Header, H-record>,
 	Pilot       string `json:"pilot"`        //"pilot": <pilot>,
 	Glider      string `json:"glider"`       //"glider": <glider>,
