@@ -49,3 +49,14 @@ type Ticker struct {
 	Tracks     []ResponsID `json:"tracks"`
 	Processing int64       `json:"processing"`
 }
+
+type SimpleWebHookStruct struct {
+	WebHookURL      string `json:"web_hook_url"`
+	MinTriggerValue int    `json:"min_trigger_value"`
+}
+type WebHookStruct struct {
+	ID              string `json:"id"`
+	Counter         int    `json:"counter"`
+	WebHookURL      string `json:"web_hook_url"`
+	MinTriggerValue int    `json:"min_trigger_value"`
+}

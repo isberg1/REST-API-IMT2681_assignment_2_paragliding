@@ -27,7 +27,10 @@ const defaultPort = "8080"
 const defaultPagingNr = "5"
 
 // MgnDB is the global
-var MgoDB = MongoDbStruct{}
+var MgoTrackDB = MongoDbStruct{}
+
+//
+var MgoWebHookDB = MongoDbStruct{}
 
 // IgcMap global variable to store all IGC files
 var IgcMap = make(map[string]Meta)
@@ -45,7 +48,8 @@ var GlobalDebug = false
 
 func main() {
 
-	MgoDB.Init("test", "mainCollection", "mongodb://127.0.0.1:27017")
+	MgoTrackDB.InitTrackCollection("test", "mainCollection", "mongodb://127.0.0.1:27017")
+	MgoWebHookDB.InitWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
@@ -58,34 +62,32 @@ func main() {
 	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/", returnID).Methods("GET")
 	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}", returnField).Methods("GET")
 	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}/", returnField).Methods("GET")
-	//GET /api/ticker/
+	//GET /paragliding/api/ticker/
 	r.HandleFunc("/paragliding/api/{ticker:ticker[/]?}", apiTicker).Methods("GET")
-	//GET /api/ticker/latest
+	//GET /paragliding/api/ticker/latest
 	r.HandleFunc("/paragliding/api/ticker/{latest:latest[/]?}", apiTtickerLatest).Methods("GET")
-	//GET /api/ticker/<timestamp>
+	//GET /paragliding/api/ticker/<timestamp>
 	r.HandleFunc("/paragliding/api/ticker/{timestamp}", apiTimestamp).Methods("GET")
-	/*/api/ticker/latest
-	// todo <track_src_url> for track_src_url
+	//POST /paragliding/api/webhook/new_track/
+	r.HandleFunc("/paragliding/api/webhook/{new_track:new_track[/]?}", WebhookNewTrack).Methods("POST")
 
-
-	//GET /api/ticker/<timestamp>
-	r.HandleFunc("/paragliding/api/ticker/{timestamp}", apiTimestamp).Methods("GET")
-
-	//POST /api/webhook/new_track/
-	r.HandleFunc("/api/webhook/new_track[/]?}", apiWebhookNew_track).Methods("POST")
-	//GET /api/webhook/new_track/<webhook_id>
-	r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", apiWebhookNew_trackWebhook_id).Methods("GET")
-	//DELETE /api/webhook/new_track/<webhook_id>
-	r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", delApiWebhookNew_trackWebhook_id).Methods("DELETE")
-
-	//GET /admin/api/tracks_count
-	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminApiTracks_count).Methods("GET")
-	//DELETE /admin/api/tracks
-	r.HandleFunc("/admin/api/{track:tracks[/]?}", apiTicker).Methods("DELETE")
 	/*
+		//
 
-		http.HandleFunc("/paragliding/api/drop_table", dropTable)
-		http.HandleFunc("/paragliding/api/drop_table/", dropTable)
+
+		//GET /api/webhook/new_track/<webhook_id>
+		r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", apiWebhookNew_trackWebhook_id).Methods("GET")
+		//DELETE /api/webhook/new_track/<webhook_id>
+		r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", delApiWebhookNew_trackWebhook_id).Methods("DELETE")
+
+		//GET /admin/api/tracks_count
+		r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminApiTracks_count).Methods("GET")
+		//DELETE /admin/api/tracks
+		r.HandleFunc("/admin/api/{track:tracks[/]?}", apiTicker).Methods("DELETE")
+		/*
+
+			http.HandleFunc("/paragliding/api/drop_table", dropTable)
+			http.HandleFunc("/paragliding/api/drop_table/", dropTable)
 	*/
 
 	port := os.Getenv("PORT")

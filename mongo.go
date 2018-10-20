@@ -7,15 +7,15 @@ import (
 )
 
 type MongoDbStruct struct {
-	Host           string
-	DatabaseName   string
-	collectionName string
+	Host         string
+	DatabaseName string
+	collection   string
 }
 
-func (db *MongoDbStruct) Init(dbName, collec, host string) {
-	db.DatabaseName = dbName   //
-	db.Host = host             //"mongodb://127.0.0.1:27017"
-	db.collectionName = collec //"teststrudentdb"
+func (db *MongoDbStruct) InitTrackCollection(dbName, collec, host string) {
+	db.DatabaseName = dbName //
+	db.Host = host           //"mongodb://127.0.0.1:27017"
+	db.collection = collec   //"teststrudentdb"
 
 	index := mgo.Index{
 		Key:        []string{"id"},
@@ -31,7 +31,32 @@ func (db *MongoDbStruct) Init(dbName, collec, host string) {
 	}
 	defer session.Close()
 
-	err2 := session.DB(db.DatabaseName).C(db.collectionName).EnsureIndex(index)
+	err2 := session.DB(db.DatabaseName).C(db.collection).EnsureIndex(index)
+	if err2 != nil {
+		panic(err2)
+	}
+}
+
+func (db *MongoDbStruct) InitWebHookCollection(dbName, collec, host string) {
+	db.DatabaseName = dbName //
+	db.Host = host           //"mongodb://127.0.0.1:27017"
+	db.collection = collec   //
+
+	index := mgo.Index{
+		Key:        []string{"web_hook_url"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	err2 := session.DB(db.DatabaseName).C(db.collection).EnsureIndex(index)
 	if err2 != nil {
 		panic(err2)
 	}
@@ -44,7 +69,7 @@ func (db *MongoDbStruct) Count() int {
 	}
 	defer session.Close()
 
-	count, err := session.DB(db.DatabaseName).C(db.collectionName).Count()
+	count, err := session.DB(db.DatabaseName).C(db.collection).Count()
 	if err != nil {
 		fmt.Println("error in Count", err)
 		return -1
@@ -52,14 +77,14 @@ func (db *MongoDbStruct) Count() int {
 	return count
 }
 
-func (db *MongoDbStruct) Add(s Meta) error {
+func (db *MongoDbStruct) Add(s interface{}) error {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
 		panic(err)
 	}
 	defer session.Close()
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Insert(s)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Insert(s)
 	if err1 != nil {
 		return err1
 	}
@@ -77,7 +102,7 @@ func (db *MongoDbStruct) Get(keyID string) (Meta, bool) {
 	allWasGood := true
 	igcMeta := Meta{}
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(bson.M{"id": keyID}).One(&igcMeta)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"id": keyID}).One(&igcMeta)
 	if err1 != nil {
 		allWasGood = false
 	}
@@ -91,7 +116,7 @@ func (db *MongoDbStruct) Delete(keyID string) bool {
 	}
 	defer session.Close()
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Remove(bson.M{"id": keyID})
+	err1 := session.DB(db.DatabaseName).C(db.collection).Remove(bson.M{"id": keyID})
 	if err1 != nil {
 		fmt.Println("error deleting from database")
 		return false
@@ -107,7 +132,7 @@ func (db *MongoDbStruct) DropCollection() bool {
 	}
 	defer session.Close()
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).DropCollection()
+	err1 := session.DB(db.DatabaseName).C(db.collection).DropCollection()
 	if err1 != nil {
 		fmt.Println("unable to drop collection")
 		return false
@@ -120,7 +145,7 @@ func (db *MongoDbStruct) DropCollection() bool {
 	}
 
 	for _, name := range collections {
-		if name == db.collectionName {
+		if name == db.collection {
 			fmt.Println("unable to drop collection")
 			return false
 		}
@@ -139,7 +164,7 @@ func (db *MongoDbStruct) GetAllKeys() ([]string, bool) {
 	ok := true
 	var ids []string
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(bson.M{}).Distinct("id", &ids)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{}).Distinct("id", &ids)
 	if err1 != nil {
 		fmt.Println("error retriving from DB")
 		ok = false
@@ -158,7 +183,7 @@ func (db *MongoDbStruct) GetLatest() (int64, bool) {
 	ok := true
 	var timestamp Meta
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(nil).Sort("-timestamp").Limit(1).One(&timestamp)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(nil).Sort("-timestamp").Limit(1).One(&timestamp)
 	if err1 != nil {
 		fmt.Println("error(GetLatest) retriving from DB", err1)
 		ok = false
@@ -177,7 +202,7 @@ func (db *MongoDbStruct) GetOldest() (int64, bool) {
 	ok := true
 	var timestamp Meta
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(nil).Sort("timestamp").Limit(1).One(&timestamp)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(nil).Sort("timestamp").Limit(1).One(&timestamp)
 	if err1 != nil {
 		fmt.Println("error(GetOldest) retriving from DB", err1)
 		ok = false
@@ -196,7 +221,7 @@ func (db *MongoDbStruct) GetByTimstamp(timeStamp int64) (Meta, bool) {
 	ok := true
 	var igcFile Meta
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(bson.M{"timestamp": timeStamp}).One(&igcFile)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": timeStamp}).One(&igcFile)
 	if err1 != nil {
 		fmt.Println("error(GetOldest) retriving from DB", err1)
 		ok = false
@@ -214,10 +239,39 @@ func (db *MongoDbStruct) GetBiggerThen(timeStamp int64) (Meta, error) {
 
 	var igcFile Meta
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(bson.M{"timestamp": bson.M{"$gt": timeStamp}}).Sort("timestamp").Limit(1).One(&igcFile) //
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": bson.M{"$gt": timeStamp}}).Sort("timestamp").Limit(1).One(&igcFile) //
 	if err1 != nil {
 		fmt.Println("error(GetBiggerThen) retriving from DB", err1, igcFile)
 	}
 
 	return igcFile, err1
+}
+
+func (db *MongoDbStruct) counterDown() {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	_, err1 := session.DB(db.DatabaseName).C(db.collection).UpdateAll(bson.M{}, bson.M{"$inc": bson.M{"counter": -1}})
+	if err1 != nil {
+		fmt.Println("(counterDown)", err1)
+	}
+}
+
+func (db *MongoDbStruct) GetPostArray() ([]WebHookStruct, error) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var webHook []WebHookStruct
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"counter": 0}).All(&webHook)
+	if err1 != nil {
+		fmt.Println("(counterDown)", err1)
+	}
+
+	return webHook, err1
 }

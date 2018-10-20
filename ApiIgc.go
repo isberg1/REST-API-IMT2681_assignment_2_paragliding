@@ -33,7 +33,8 @@ func postFile(w http.ResponseWriter, r *http.Request) {
 
 	//addToMap(trackStruct)
 	respondToClient(w, trackStruct.Id)
-	MgoDB.Add(trackStruct)
+	MgoTrackDB.Add(trackStruct)
+	InvokWebHooks()
 
 }
 
@@ -48,10 +49,20 @@ func respondToClient(w http.ResponseWriter, s string) {
 	json.NewEncoder(w).Encode(response)
 }
 
+//Todo find a beter ID system then count (invalid if somthing is deleted)
 // makes a unique ID for Posted content to be stored in IgcMap
-func getUniqueID() string {
-	counter++ // increments global counter
-	return strconv.Itoa(counter)
+func getUniqueTrackID() (string, bool) {
+	count := MgoTrackDB.Count()
+	id := strconv.Itoa(count + 1)
+	return id, true
+}
+
+//Todo find a beter ID system then count (invalid if somthing is deleted)
+// makes a unique ID for Posted content to be stored in IgcMap
+func getUniqueWebHookkID() (string, bool) {
+	count := MgoWebHookDB.Count()
+	id := strconv.Itoa(count + 1)
+	return id, true
 }
 
 // processes GET content for url "/paragliding/api/Igc/"
@@ -63,7 +74,7 @@ func getFiles(w http.ResponseWriter, r *http.Request) {
 	// transfer all IgcMap key to its own slice"keySlice"
 	// and put the keys into a slice "keySlice"
 
-	ids, ok := MgoDB.GetAllKeys()
+	ids, ok := MgoTrackDB.GetAllKeys()
 	if !ok {
 		http.Error(w, "serverside error", http.StatusInternalServerError)
 	}
@@ -73,7 +84,7 @@ func getFiles(w http.ResponseWriter, r *http.Request) {
 		keySlice = append(keySlice, temp)
 	}
 	// special case for no IGC file registered
-	if MgoDB.Count() < 1 {
+	if MgoTrackDB.Count() < 1 {
 		// make an empty array
 		keySlice = make([]ResponsID, 0)
 		// write empty json array back to client

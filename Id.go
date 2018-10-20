@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/marni/goigc"
@@ -17,7 +18,7 @@ func returnID(w http.ResponseWriter, r *http.Request) {
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
 
-	igcStruct, ok := MgoDB.Get(vars["Id"])
+	igcStruct, ok := MgoTrackDB.Get(vars["Id"])
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -46,8 +47,12 @@ func parseFile(URLfile string) (Meta, error) {
 	temp := track.Task.Distance()
 	distance := int(temp)
 
+	id, ok := getUniqueTrackID()
+	if !ok {
+		return Meta{}, errors.New("unable to get getUniqueTrackID")
+	}
 	return Meta{
-			Id:          getUniqueID(),
+			Id:          id,
 			TimeStamp:   getTimestamp(),
 			URL:         URLfile,
 			HDate:       track.Date.String(), // alternativ: "track.Header.Date.String()"
@@ -66,7 +71,7 @@ func returnField(w http.ResponseWriter, r *http.Request) {
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
 
-	igcStruct, ok := MgoDB.Get(vars["Id"])
+	igcStruct, ok := MgoTrackDB.Get(vars["Id"])
 	if !ok {
 		fmt.Println("from not found")
 		w.WriteHeader(http.StatusNotFound)
