@@ -1,38 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 func WebhookNewTrack(w http.ResponseWriter, r *http.Request) {
-
-	/*
-		What: Registration of new webhook for notifications about tracks being added to the system.
-		Returns the details about the registration. The webhookURL is required parameter of the request.
-		The minTriggerValue is optional integer, that defaults to 1 if ommited.
-		It indicated the frequency of updates - after how many new tracks the webhook should be called.
-
-	Response type: application/json
-	Response code: 200 or 201 if everything is OK, appropriate error code otherwise.
-
-	Request
-	{
-	    "webhookURL": {
-	      "type": "string"
-	    },
-	    "minTriggerValue": {
-	      "type": "number"
-	    }
-	}
-	Example, that registers a webhook that should be trigger for every two new tracks added to the system.
-
-	Response
-	The response body should contain the id of the created resource (aka webhook registration), as string. Note,
-		the response body will contain only the created id, as string, not the entire path; no json encoding.
-		Response code upon success should be 200 or 201.
-	*/
 
 	var webHook WebHookStruct
 	err := json.NewDecoder(r.Body).Decode(&webHook)
@@ -58,19 +34,19 @@ func WebhookNewTrack(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "serverside error(MgoWebHookDB.Add)", http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Fprintln(w, webHook.ID)
 }
 
-func InvokWebHooks() {
+func InvokWebHooks(w http.ResponseWriter) {
+
+	processingStartTime := time.Now()
 
 	MgoWebHookDB.counterDown()
-	postToWebHooks()
-	//MgoWebHookDB.counterReset()
+	webHook := postToWebHooks(w, processingStartTime)
+	MgoWebHookDB.counterReset(webHook)
 
 }
 
-func postToWebHooks() {
+func postToWebHooks(w http.ResponseWriter, processingStartTime time.Time) []WebHookStruct {
 
 	var webHook []WebHookStruct
 
@@ -80,18 +56,42 @@ func postToWebHooks() {
 	}
 
 	for _, val := range webHook {
-		err1 := postTo(val)
+		err1 := postTo(val, w, processingStartTime)
 		if err1 != nil {
 			fmt.Println("unable to post to ", err1)
 		}
 	}
-
+	return webHook
 }
 
-func postTo(webHook WebHookStruct) error {
-	fmt.Println(webHook)
+func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime time.Time) error {
+	/*
+		{
+	   "t_latest": <latest added timestamp of the entire collection>,
+	   "tracks": [<id1>, <id2>, ...]
+	   "processing": <time in ms of how long it took to process the request>
+	}
+	*/
 
-	MgoTrackDB.G
+	var ids []ResponsID
+	ids, err := MgoTrackDB.GetXLatest(webHook.MinTriggerValue)
+	if err != nil {
+		fmt.Println("unable to get []ResponsID ", err)
+	}
+
+	latest, ok := MgoTrackDB.GetLatest()
+	if !ok {
+		fmt.Println("unable to post get latest Track ")
+	}
+	temp := InvokeWebHookStruct{
+		TLatest:    latest,
+		Tracks:     ids,
+		Processing: time.Since(processingStartTime).Nanoseconds() / int64(time.Millisecond),
+	}
+	a, _ := json.Marshal(&temp)
+	//fmt.Println(temp)
+
+	http.Post("http://localhost:8080/test", contentType, bytes.NewBuffer(a))
 
 	return nil
 }

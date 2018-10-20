@@ -60,3 +60,8 @@ type WebHookStruct struct {
 	WebHookURL      string `json:"web_hook_url"`
 	MinTriggerValue int    `json:"min_trigger_value"`
 }
+type InvokeWebHookStruct struct {
+	TLatest    int64       `json:"t_latest"`
+	Tracks     []ResponsID `json:"tracks"`
+	Processing int64       `json:"processing"`
+}

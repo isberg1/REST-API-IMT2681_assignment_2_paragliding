@@ -268,10 +268,42 @@ func (db *MongoDbStruct) GetPostArray() ([]WebHookStruct, error) {
 	defer session.Close()
 
 	var webHook []WebHookStruct
-	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"counter": 0}).All(&webHook)
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"counter": bson.M{"$lt": 1}}).All(&webHook)
 	if err1 != nil {
 		fmt.Println("(counterDown)", err1)
 	}
 
 	return webHook, err1
+}
+
+func (db *MongoDbStruct) GetXLatest(lastNr int) ([]ResponsID, error) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var ids []ResponsID
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(nil).Sort("-timestamp").Limit(lastNr).All(&ids)
+	if err1 != nil {
+		fmt.Println("(counterDown)", err1)
+	}
+
+	return ids, err1
+}
+
+func (db *MongoDbStruct) counterReset(webHookArray []WebHookStruct) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	for _, val := range webHookArray {
+		val.Counter = val.MinTriggerValue
+		err1 := session.DB(db.DatabaseName).C(db.collection).Update(bson.M{"id": val.ID}, bson.M{"$set": bson.M{"counter": val.MinTriggerValue}})
+		if err1 != nil {
+			fmt.Println("(counterDown)", err1)
+		}
+	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -71,6 +72,7 @@ func main() {
 	//POST /paragliding/api/webhook/new_track/
 	r.HandleFunc("/paragliding/api/webhook/{new_track:new_track[/]?}", WebhookNewTrack).Methods("POST")
 
+	r.HandleFunc("/test", printRespons).Methods("POST")
 	/*
 		//
 
@@ -135,4 +137,15 @@ func dropTable(w http.ResponseWriter, r *http.Request) {
 		// if method is anything else
 		http.Error(w, "illegal method", http.StatusMethodNotAllowed)
 	}
+}
+
+func printRespons(w http.ResponseWriter, r *http.Request) {
+
+	a, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("printRespons", err)
+	}
+
+	fmt.Println(string(a))
+
 }

@@ -34,7 +34,7 @@ func postFile(w http.ResponseWriter, r *http.Request) {
 	//addToMap(trackStruct)
 	respondToClient(w, trackStruct.Id)
 	MgoTrackDB.Add(trackStruct)
-	InvokWebHooks()
+	InvokWebHooks(w)
 
 }
 
