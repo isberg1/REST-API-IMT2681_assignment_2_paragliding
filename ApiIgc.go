@@ -7,19 +7,6 @@ import (
 	"strconv"
 )
 
-//processes http Methods for url "/paragliding/api/track/"
-func selectMethodForAPIIgc(w http.ResponseWriter, r *http.Request) {
-	// process method type and call appropriate response function
-	switch r.Method {
-	case http.MethodGet: // if GET method
-		//getFiles(w)
-	case http.MethodPost: // if POST method
-		postFile(w, r)
-	default: // for anything else, respond with error
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
 // processes POST content for url "/paragliding/api/Igc/"
 func postFile(w http.ResponseWriter, r *http.Request) {
 	//read the POST body content

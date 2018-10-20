@@ -23,6 +23,9 @@ const unavalabeVersinNr = "Unavalable"
 // default port
 const defaultPort = "8080"
 
+//default Paging number
+const defaultPagingNr = "5"
+
 // MgnDB is the global
 var MgoDB = MongoDbStruct{}
 
@@ -55,15 +58,18 @@ func main() {
 	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/", returnID).Methods("GET")
 	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}", returnField).Methods("GET")
 	r.HandleFunc("/paragliding/api/track/{Id:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}/", returnField).Methods("GET")
+	//GET /api/ticker/
+	r.HandleFunc("/paragliding/api/{ticker:ticker[/]?}", apiTicker).Methods("GET")
 	//GET /api/ticker/latest
 	r.HandleFunc("/paragliding/api/ticker/{latest:latest[/]?}", apiTtickerLatest).Methods("GET")
+	//GET /api/ticker/<timestamp>
+	r.HandleFunc("/paragliding/api/ticker/{timestamp}", apiTimestamp).Methods("GET")
 	/*/api/ticker/latest
 	// todo <track_src_url> for track_src_url
 
-	//GET /api/ticker/
-	r.HandleFunc("/api/{ticker:ticker[/]?}", apiTticker).Methods("GET")
+
 	//GET /api/ticker/<timestamp>
-	r.HandleFunc("/api/{timestamp}{slash:[/]?}", apiTimestamp).Methods("GET")
+	r.HandleFunc("/paragliding/api/ticker/{timestamp}", apiTimestamp).Methods("GET")
 
 	//POST /api/webhook/new_track/
 	r.HandleFunc("/api/webhook/new_track[/]?}", apiWebhookNew_track).Methods("POST")
@@ -75,7 +81,7 @@ func main() {
 	//GET /admin/api/tracks_count
 	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminApiTracks_count).Methods("GET")
 	//DELETE /admin/api/tracks
-	r.HandleFunc("/admin/api/{track:tracks[/]?}", apiTticker).Methods("DELETE")
+	r.HandleFunc("/admin/api/{track:tracks[/]?}", apiTicker).Methods("DELETE")
 	/*
 
 		http.HandleFunc("/paragliding/api/drop_table", dropTable)

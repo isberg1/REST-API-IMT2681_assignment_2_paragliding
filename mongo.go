@@ -148,8 +148,7 @@ func (db *MongoDbStruct) GetAllKeys() ([]string, bool) {
 	return ids, ok
 }
 
-/*
-func (db *MongoDbStruct) GetAllKeys() ([]string, bool) {
+func (db *MongoDbStruct) GetLatest() (int64, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
 		panic(err)
@@ -157,15 +156,68 @@ func (db *MongoDbStruct) GetAllKeys() ([]string, bool) {
 	defer session.Close()
 
 	ok := true
-	var ids []string
+	var timestamp Meta
 
-	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find().Sort({"time_stamp": -1})
-	db.collection.find().sort({_id: -1}).limit(1)
+	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(nil).Sort("-timestamp").Limit(1).One(&timestamp)
 	if err1 != nil {
-		fmt.Println("error retriving from DB")
+		fmt.Println("error(GetLatest) retriving from DB", err1)
 		ok = false
 	}
 
-	return ids, ok
+	return timestamp.TimeStamp, ok
 }
-*/
+
+func (db *MongoDbStruct) GetOldest() (int64, bool) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	ok := true
+	var timestamp Meta
+
+	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(nil).Sort("timestamp").Limit(1).One(&timestamp)
+	if err1 != nil {
+		fmt.Println("error(GetOldest) retriving from DB", err1)
+		ok = false
+	}
+
+	return timestamp.TimeStamp, ok
+}
+
+func (db *MongoDbStruct) GetByTimstamp(timeStamp int64) (Meta, bool) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	ok := true
+	var igcFile Meta
+
+	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(bson.M{"timestamp": timeStamp}).One(&igcFile)
+	if err1 != nil {
+		fmt.Println("error(GetOldest) retriving from DB", err1)
+		ok = false
+	}
+
+	return igcFile, ok
+}
+
+func (db *MongoDbStruct) GetBiggerThen(timeStamp int64) (Meta, error) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	var igcFile Meta
+
+	err1 := session.DB(db.DatabaseName).C(db.collectionName).Find(bson.M{"timestamp": bson.M{"$gt": timeStamp}}).Sort("timestamp").Limit(1).One(&igcFile) //
+	if err1 != nil {
+		fmt.Println("error(GetBiggerThen) retriving from DB", err1, igcFile)
+	}
+
+	return igcFile, err1
+}

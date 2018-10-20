@@ -41,3 +41,11 @@ type SimpleMeta struct {
 type Empty struct {
 	_ string `json:""`
 }
+
+type Ticker struct {
+	TLatest    int64       `json:"t_latest"`
+	TStart     int64       `json:"t_start"`
+	TStorp     int64       `json:"t_storp"`
+	Tracks     []ResponsID `json:"tracks"`
+	Processing int64       `json:"processing"`
+}
