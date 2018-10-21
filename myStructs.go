@@ -37,7 +37,7 @@ type SimpleMeta struct {
 	TrackLength int    `json:"track_length"` //"track_length": <calculated total track length>
 }
 
-// Empty used for returning empty json body when no ID is found in data structure IgcMap
+// Empty used for returning empty json body when no Id is found in data structure IgcMap
 type Empty struct {
 	_ string `json:""`
 }
@@ -55,7 +55,8 @@ type SimpleWebHookStruct struct {
 	MinTriggerValue int    `json:"min_trigger_value"`
 }
 type WebHookStruct struct {
-	ID              string `json:"id"`
+	Id              string `json:"id"`
+	TimeStamp       int64  `json:"time_stamp"`
 	Counter         int    `json:"counter"`
 	WebHookURL      string `json:"web_hook_url"`
 	MinTriggerValue int    `json:"min_trigger_value"`

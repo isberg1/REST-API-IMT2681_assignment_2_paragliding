@@ -18,8 +18,8 @@ const localProjectURLroot = "http://localhost:8080/"
 const localProjectURLbase = "http://localhost:8080/paragliding/"
 const localProjectURLinfo1 = "http://localhost:8080/paragliding/api"
 const localProjectURLinfo2 = "http://localhost:8080/paragliding/api/"
-const localProjectURLarray1 = "http://localhost:8080/paragliding/api/igc/"
-const localProjectURLarray2 = "http://localhost:8080/paragliding/api/igc"
+const localProjectURLarray1 = "http://localhost:8080/paragliding/api/track/"
+const localProjectURLarray2 = "http://localhost:8080/paragliding/api/track"
 const validIgcURL1 = "http://skypolaris.org/wp-content/uploads/IGS%20Files/Madrid%20to%20Jerez.igc"
 const validIgcURL2 = "https://raw.githubusercontent.com/marni/goigc/master/testdata/optimize-long-flight-1.igc"
 
@@ -30,6 +30,15 @@ func Test_startServer(t *testing.T) {
 	// start local server
 	go main()
 	time.Sleep(2 * time.Second)
+	err := MgoTrackDB.DropTable()
+	if err != nil {
+		t.Error("unable to drop collection", err)
+	}
+	err1 := MgoWebHookDB.DropTable()
+	if err1 != nil {
+		t.Error("unable to drop collection", err)
+	}
+
 }
 
 // wait for server to be established
@@ -57,7 +66,6 @@ func Test_rubbishURL_local(t *testing.T) {
 	temp = append(
 		temp,
 		localProjectURLroot,
-		localProjectURLbase,
 		localProjectURLbase+"rubbish",
 		localProjectURLinfo1+"rubbish",
 		localProjectURLarray1+"rubbish",
@@ -177,7 +185,7 @@ func Test_PostInvalidContent(t *testing.T) {
 			t.Error("error illegal POST permitted for: ", res)
 		}
 	} // test if IgcMap length is as expected
-	if len(IgcMap) != 0 {
+	if MgoTrackDB.Count() != 0 {
 		t.Error("error invalid content posted in data structure: IgcMap")
 	}
 }
@@ -224,8 +232,8 @@ func Test_PostValidContent(t *testing.T) {
 		}
 	}
 	// check that nr of entries in IgcMap is correct
-	if len(IgcMap) != (len(postURL) + len(igcULR)) {
-		t.Error("error data structure does not contain expected nr of values: ", len(IgcMap))
+	if MgoTrackDB.Count() != (len(postURL) + len(igcULR)) {
+		t.Error("error data structure does not contain expected nr of values: ", MgoTrackDB.Count())
 	}
 }
 
@@ -242,17 +250,17 @@ func validatePostResponse(p *http.Response) error {
 		return errors.New("can not unmarshal ")
 	}
 
-	test, err4 := regexp.MatchString(idPrefix+"[1-9]*", strc.ID)
+	test, err4 := regexp.MatchString("[1-9]*", strc.ID)
 	if err4 != nil {
 		return errors.New("defective regex compilation ")
 	}
 	if !test {
-		return errors.New("incorrect return ID string based on regex match ")
+		return errors.New("incorrect return Id string based on regex match ")
 	}
 	return nil
 }
 
-// tries to get the json array of all stored Igc file ID's
+// tries to get the json array of all stored Igc file Id's
 func Test_getAllIDs(t *testing.T) {
 	expected := http.StatusOK
 
@@ -273,7 +281,7 @@ func Test_getAllIDs(t *testing.T) {
 	if err3 != nil {
 		t.Error("error unable to unmarshal json array", err3)
 	}
-	if len(slice) != len(IgcMap) {
+	if len(slice) != MgoTrackDB.Count() {
 		t.Error("error not the same nr of objects in local and global data structures")
 	}
 }
@@ -292,10 +300,12 @@ func Test_getFields(t *testing.T) {
 		"track_length",
 	)
 
-	for key := range IgcMap {
+	for key := 1; key == MgoTrackDB.Count(); key++ {
 		for _, field := range metaKey {
 
-			myURL := localProjectURLarray1 + key + "/" + field
+			strKey := strconv.Itoa(key)
+
+			myURL := localProjectURLarray1 + strKey + "/" + field
 
 			get, err := http.Get(myURL)
 			if err != nil {
@@ -325,5 +335,127 @@ func Test_getFields(t *testing.T) {
 			}
 		}
 	}
+}
 
+func Test_apiTtickerLatest(t *testing.T) {
+
+	expectedContentType := "text/plain"
+	expectedStatusCode := 200
+	biggerThenExpected := getTimestamp()
+
+	get, err := http.Get(localProjectURLroot + "paragliding/api/ticker/latest")
+	if err != nil {
+		t.Error("error getting from URL", err)
+	}
+	defer get.Body.Close()
+	if get.StatusCode != expectedStatusCode {
+		fmt.Println(get.StatusCode)
+		t.Error("error invalid status code")
+	}
+	if get.Header.Get("Content-Type") != expectedContentType {
+		t.Error("error invalid Content-Type ")
+	}
+
+	res, err2 := ioutil.ReadAll(get.Body)
+	if err2 != nil {
+		t.Error("error reading body", err2)
+	}
+
+	intRes, err3 := strconv.ParseInt(string(res), 10, 64)
+	if err3 != nil {
+		t.Error("error convering to int", err3)
+	}
+	if biggerThenExpected <= intRes {
+		t.Error("error reading body", biggerThenExpected, intRes)
+	}
+}
+
+func Test_apiTicker(t *testing.T) {
+
+	expectedContentType := "application/json"
+	expectedStatusCode := 200
+
+	get, err := http.Get(localProjectURLroot + "paragliding/api/ticker/")
+	if err != nil {
+		t.Error("error getting from URL", err)
+	}
+	defer get.Body.Close()
+	if get.StatusCode != expectedStatusCode {
+		fmt.Println(get.StatusCode)
+		t.Error("error invalid status code")
+	}
+	if get.Header.Get("Content-Type") != expectedContentType {
+		t.Error("error invalid Content-Type ", get.Header.Get("Content-Type"))
+	}
+
+	res, err2 := ioutil.ReadAll(get.Body)
+	if err2 != nil {
+		t.Error("error reading body", err2)
+	}
+	var ticker Ticker
+	err3 := json.Unmarshal(res, &ticker)
+	if err3 != nil {
+		t.Error("error unable to unmarshal json array", err3)
+	}
+	time, ok := MgoTrackDB.GetLatest()
+	if !ok {
+		t.Error("error unable to get latest timestamp")
+	}
+
+	if ticker.TLatest != time {
+		t.Error("error wrong timestamp")
+	}
+	pagingNr, err4 := getPagingNr()
+	if err4 != nil {
+		t.Error("error unable to get pagingNr")
+	}
+	if len(ticker.Tracks) != pagingNr {
+		t.Error("error wrong len of tincker.Tracks pagingNr", len(ticker.Tracks), pagingNr)
+	}
+}
+
+func Test_WebhookNewTrack(t *testing.T) {
+
+	expectedStatusCode := 200
+	//dbCountPriorToPost := MgoWebHookDB.Count()
+
+	subscriberWebHook := localProjectURLroot + "/test"
+	postURL := localProjectURLroot + "paragliding/api/webhook/new_track"
+
+	jsonString, err := json.Marshal(SimpleWebHookStruct{WebHookURL: subscriberWebHook, MinTriggerValue: 3})
+	if err != nil {
+		t.Error("error marshaling into json")
+	} // for all  URL to send POST content to
+
+	// try posing
+	post, err2 := http.Post(postURL, contentType, bytes.NewBuffer(jsonString))
+	if err2 != nil {
+		t.Error("error unable to POST from: ", postURL)
+	}
+	defer post.Body.Close()
+	if post.StatusCode != expectedStatusCode {
+		t.Error("error legal post not permitted for: ", postURL)
+	}
+
+	id, err3 := ioutil.ReadAll(post.Body)
+	if err3 != nil {
+		t.Error("error unable to read Post.Body : ", err3)
+	}
+
+	responce, ok := MgoWebHookDB.GetWebHook(string(id))
+	if !ok {
+		t.Error("error unable was unsuccessful at posting to webHook Subscription", responce, "--", string(id))
+	}
+
+}
+
+func Test_cleanUp(t *testing.T) {
+	err := MgoTrackDB.DropTable()
+	if err != nil {
+		t.Error("unable to drop collection", err)
+	}
+	err1 := MgoWebHookDB.DropTable()
+	if err1 != nil {
+		t.Error("unable to drop collection", err)
+	}
 }

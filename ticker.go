@@ -26,13 +26,17 @@ func apiTtickerLatest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, timeStamp)
+	fmt.Fprint(w, timeStamp)
 
 }
 
 func apiTicker(w http.ResponseWriter, r *http.Request) {
 	/*
-		What: returns the JSON struct representing the ticker for the IGC tracks. The first track returned should be the oldest. The array of track ids returned should be capped at 5, to emulate "paging" of the responses. The cap (5) should be a configuration parameter of the application (ie. easy to change by the administrator).
+		What: returns the JSON struct representing the ticker for the IGC tracks.
+		The first track returned should be the oldest. The array of track ids returned should be capped at 5,
+		to emulate "paging" of the responses. The cap (5) should be a configuration parameter of the
+		application (ie. easy to change by the administrator).
+
 		Response type: application/json
 		Response code: 200 if everything is OK, appropriate error code otherwise.
 		Response
@@ -68,7 +72,7 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var nextTimeStamp int64
-	nextTimeStamp, ok = MgoTrackDB.GetOldest()
+	nextTimeStamp, ok = MgoTrackDB.GetOldestTimeStamp()
 	if !ok {
 		http.Error(w, "", http.StatusNoContent)
 		return
@@ -83,7 +87,7 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 
 	var idArray = make([]ResponsID, 0, 0)
 
-	firsID, ok := MgoTrackDB.GetByTimstamp(nextTimeStamp)
+	firsID, ok := MgoTrackDB.GetMetaByTimstamp(nextTimeStamp)
 	if !ok {
 		http.Error(w, "", http.StatusNoContent)
 		return
@@ -119,6 +123,10 @@ func getPagingNr() (int, error) {
 		nr = defaultPagingNr
 	}
 	temp, err := strconv.Atoi(nr)
+
+	if MgoTrackDB.Count() < temp {
+		temp = MgoTrackDB.Count()
+	}
 
 	return temp, err
 }
@@ -164,7 +172,7 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	_, ok := MgoTrackDB.GetByTimstamp(nextTimeStamp)
+	_, ok := MgoTrackDB.GetMetaByTimstamp(nextTimeStamp)
 	if !ok {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
@@ -212,5 +220,3 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(ticker)
 
 }
-
-//todo secure id to new files on restart gets max value from DB

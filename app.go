@@ -6,26 +6,23 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
 //________________________________________________________________________
 
-// application description string, used to inform client
-const infoSting = "Service for IGC tracks."
-
-// used to make uniqe Id for IgcMap
-const idPrefix = "IGC_file_"
-
-// used as default value for version nr
-const unavalabeVersinNr = "Unavalable"
-
-// default port
-const defaultPort = "8080"
-
-//default Paging number
-const defaultPagingNr = "5"
+const (
+	// application description string, used to inform client
+	infoSting = "Service for IGC tracks."
+	// used to make uniqe Id for IgcMap
+	idPrefix = "IGC_file_"
+	// used as default value for version nr
+	unavalabeVersinNr = "Unavalable"
+	// default port
+	defaultPort = "8080"
+	//default Paging number
+	defaultPagingNr = "5"
+)
 
 // MgnDB is the global
 var MgoTrackDB = MongoDbStruct{}
@@ -33,17 +30,8 @@ var MgoTrackDB = MongoDbStruct{}
 //
 var MgoWebHookDB = MongoDbStruct{}
 
-// IgcMap global variable to store all IGC files
-var IgcMap = make(map[string]Meta)
-
-// global counter, used to make uniqe IGC file ID
-var counter int
-
 // StartUpTime registers the startup time for the application, used for calculating application runtime
 var StartUpTime = time.Now()
-
-// GlobalDebug used in debugging
-var GlobalDebug = false
 
 //________made basic admin handlers
 //tested remote database ________________________________________________________________
@@ -52,7 +40,6 @@ func main() {
 
 	MgoTrackDB.InitTrackCollection("test", "mainCollection", "mongodb://127.0.0.1:27017")
 	MgoWebHookDB.InitWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
-	//mongodb://testuser:test123@ds235833.mlab.com:35833/teststrudentdb
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
@@ -84,20 +71,6 @@ func main() {
 	r.HandleFunc("/admin/api/{track:tracks[/]?}", trackDropTable).Methods("DELETE")
 
 	r.HandleFunc("/test", printRespons).Methods("POST")
-	/*
-		//
-
-
-
-
-
-		/
-
-		/*
-
-			http.HandleFunc("/paragliding/api/drop_table", dropTable)
-			http.HandleFunc("/paragliding/api/drop_table/", dropTable)
-	*/
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -113,37 +86,6 @@ func main() {
 func all(w http.ResponseWriter, r *http.Request) {
 	// URL not supported
 	http.NotFound(w, r)
-}
-
-func debug(w http.ResponseWriter, s string) {
-	if GlobalDebug == true {
-		fmt.Fprintln(w, "debug from "+s)
-	}
-}
-
-// handels URL for "/paragliding/api/drop_table/"
-func dropTable(w http.ResponseWriter, r *http.Request) {
-	// process url
-	message := r.URL.Path
-	message = strings.TrimPrefix(message, "/")
-	a := strings.Split(message, "/")
-
-	//check if there are rubbis URL section after /drop_table/
-	if len(a) > 3 && a[3] != "" {
-		http.NotFound(w, r)
-		return
-	}
-	// process http method
-	// if DELETE method is used
-	if r.Method == http.MethodDelete {
-		if len(IgcMap) > 0 {
-			IgcMap = make(map[string]Meta)
-			counter = 0
-		}
-	} else {
-		// if method is anything else
-		http.Error(w, "illegal method", http.StatusMethodNotAllowed)
-	}
 }
 
 func rederect(w http.ResponseWriter, r *http.Request) {

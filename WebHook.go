@@ -21,20 +21,23 @@ func WebhookNewTrack(w http.ResponseWriter, r *http.Request) {
 	if webHook.MinTriggerValue == 0 {
 		webHook.MinTriggerValue = 1
 	}
-	fmt.Fprintln(w, webHook)
+
 	id, ok := getUniqueWebHookkID()
 	if !ok {
 		http.Error(w, "serverside error(getUniqueWebHookkID)", http.StatusInternalServerError)
 		return
 	}
-	webHook.ID = id
+	webHook.Id = id
 	webHook.Counter = webHook.MinTriggerValue
+	webHook.TimeStamp = getTimestamp()
 
 	err1 := MgoWebHookDB.Add(webHook)
 	if err1 != nil {
 		http.Error(w, "serverside error(MgoWebHookDB.Add)", http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Fprint(w, id)
 }
 
 func InvokWebHooks(w http.ResponseWriter) {
@@ -93,7 +96,7 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	//fmt.Println(temp)
 
 	// Todo post to right host (webHook.WebHookURL )
-	http.Post("http://localhost:8080/test", contentType, bytes.NewBuffer(a))
+	http.Post("http://localhost:8080/test", "application/json", bytes.NewBuffer(a))
 
 	return nil
 }
@@ -122,6 +125,7 @@ func deleteWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.Header.Add(w.Header(), "content-type", "application/json")
 	json.NewEncoder(w).Encode(SimpleWebHookStruct{
 		WebHookURL:      webHook.WebHookURL,
 		MinTriggerValue: webHook.MinTriggerValue,

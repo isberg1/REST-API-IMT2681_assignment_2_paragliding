@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// proccesses GET for "paragliding/api/Igc/ID"
+// proccesses GET for "paragliding/api/Igc/Id"
 func returnID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -32,8 +32,20 @@ func returnID(w http.ResponseWriter, r *http.Request) {
 		TrackLength: igcStruct.TrackLength,
 	}
 
-	// return IGC meta in json format for ID 's'
+	// return IGC meta in json format for Id 's'
 	json.NewEncoder(w).Encode(simpleIgcStruct)
+}
+
+// calculate the track_lenght in km
+func calculateTrackLenght(track igc.Track) int {
+
+	floatDistance := 0.0
+	// sums up the total distance
+	for i := 0; i < len(track.Points)-1; i++ {
+		floatDistance += track.Points[i].Distance(track.Points[i+1])
+	}
+
+	return int(floatDistance)
 }
 
 // converts URL string into i Meta struct
@@ -43,27 +55,25 @@ func parseFile(URLfile string) (Meta, error) {
 	if err != nil {
 		return Meta{}, err
 	}
-	// return a Meta struct with relevant data
-	temp := track.Task.Distance()
-	distance := int(temp)
 
 	id, ok := getUniqueTrackID()
 	if !ok {
 		return Meta{}, errors.New("unable to get getUniqueTrackID")
 	}
+	// return a Meta struct with relevant data
 	return Meta{
 			Id:          id,
 			TimeStamp:   getTimestamp(),
 			URL:         URLfile,
-			HDate:       track.Date.String(), // alternativ: "track.Header.Date.String()"
+			HDate:       track.Date.String(),
 			Pilot:       track.Pilot,
 			Glider:      track.GliderType,
 			GliderID:    track.GliderID,
-			TrackLength: distance},
+			TrackLength: calculateTrackLenght(track)},
 		nil
 }
 
-// processes GET for url "paragliding/api/Igc/ID/feild"
+// processes GET for url "paragliding/api/Igc/Id/feild"
 func returnField(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)

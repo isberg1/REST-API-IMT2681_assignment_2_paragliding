@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -49,19 +50,65 @@ func respondToClient(w http.ResponseWriter, s string) {
 	json.NewEncoder(w).Encode(response)
 }
 
-//Todo find a beter ID system then count (invalid if somthing is deleted)
-// makes a unique ID for Posted content to be stored in IgcMap
+//Todo find a beter Id system then count (invalid if somthing is deleted)
+// makes a unique Id for Posted content to be stored in track collection
 func getUniqueTrackID() (string, bool) {
 	count := MgoTrackDB.Count()
-	id := strconv.Itoa(count + 1)
+	if count == -1 {
+		return "", false
+	}
+	if count == 0 {
+		return "1", true
+	}
+
+	timeStamp, ok := MgoTrackDB.GetLatest()
+	if !ok {
+		return "", false
+	}
+
+	meta, ok := MgoTrackDB.GetWebHookByTimstamp(timeStamp)
+	if !ok {
+		return "", false
+	}
+
+	strID, err := strconv.Atoi(meta.Id)
+	if err != nil {
+		fmt.Println(err)
+		return "", false
+	}
+	strID++
+	id := strconv.Itoa(strID)
 	return id, true
 }
 
-//Todo find a beter ID system then count (invalid if somthing is deleted)
-// makes a unique ID for Posted content to be stored in IgcMap
+//Todo find a beter Id system then count (invalid if somthing is deleted)
+// makes a unique Id for Posted content to be stored in webhook collection
 func getUniqueWebHookkID() (string, bool) {
 	count := MgoWebHookDB.Count()
-	id := strconv.Itoa(count + 1)
+	if count == -1 {
+		return "", false
+	}
+	if count == 0 {
+		return "1", true
+	}
+
+	timeStamp, ok := MgoWebHookDB.GetLatest()
+	if !ok {
+		return "", false
+	}
+
+	webHook, ok := MgoWebHookDB.GetWebHookByTimstamp(timeStamp)
+	if !ok {
+		return "", false
+	}
+
+	strID, err := strconv.Atoi(webHook.Id)
+	if err != nil {
+		fmt.Println(err)
+		return "", false
+	}
+	strID++
+	id := strconv.Itoa(strID)
 	return id, true
 }
 

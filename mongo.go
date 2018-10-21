@@ -192,7 +192,7 @@ func (db *MongoDbStruct) GetLatest() (int64, bool) {
 	return timestamp.TimeStamp, ok
 }
 
-func (db *MongoDbStruct) GetOldest() (int64, bool) {
+func (db *MongoDbStruct) GetOldestTimeStamp() (int64, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
 		panic(err)
@@ -204,14 +204,14 @@ func (db *MongoDbStruct) GetOldest() (int64, bool) {
 
 	err1 := session.DB(db.DatabaseName).C(db.collection).Find(nil).Sort("timestamp").Limit(1).One(&timestamp)
 	if err1 != nil {
-		fmt.Println("error(GetOldest) retriving from DB", err1)
+		fmt.Println("error(GetOldestTimeStamp) retriving from DB", err1)
 		ok = false
 	}
 
 	return timestamp.TimeStamp, ok
 }
 
-func (db *MongoDbStruct) GetByTimstamp(timeStamp int64) (Meta, bool) {
+func (db *MongoDbStruct) GetMetaByTimstamp(timeStamp int64) (Meta, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
 		panic(err)
@@ -223,11 +223,29 @@ func (db *MongoDbStruct) GetByTimstamp(timeStamp int64) (Meta, bool) {
 
 	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": timeStamp}).One(&igcFile)
 	if err1 != nil {
-		fmt.Println("error(GetOldest) retriving from DB", err1)
+		fmt.Println("error(GetOldestTimeStamp) retriving from DB", err1)
 		ok = false
 	}
 
 	return igcFile, ok
+}
+func (db *MongoDbStruct) GetWebHookByTimstamp(timeStamp int64) (WebHookStruct, bool) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	ok := true
+	var wHook WebHookStruct
+
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": timeStamp}).One(&wHook)
+	if err1 != nil {
+		fmt.Println("error(GetOldestTimeStamp) retriving from DB", err1)
+		ok = false
+	}
+
+	return wHook, ok
 }
 
 func (db *MongoDbStruct) GetBiggerThen(timeStamp int64) (Meta, error) {
@@ -301,7 +319,7 @@ func (db *MongoDbStruct) counterReset(webHookArray []WebHookStruct) {
 
 	for _, val := range webHookArray {
 		val.Counter = val.MinTriggerValue
-		err1 := session.DB(db.DatabaseName).C(db.collection).Update(bson.M{"id": val.ID}, bson.M{"$set": bson.M{"counter": val.MinTriggerValue}})
+		err1 := session.DB(db.DatabaseName).C(db.collection).Update(bson.M{"id": val.Id}, bson.M{"$set": bson.M{"counter": val.MinTriggerValue}})
 		if err1 != nil {
 			fmt.Println("(counterDown)", err1)
 		}
@@ -316,7 +334,7 @@ func (db *MongoDbStruct) GetWebHook(keyID string) (WebHookStruct, bool) {
 
 	allWasGood := true
 	webHook := WebHookStruct{}
-
+	//Find(bson.M{"id": keyID}).One(&igcMeta)
 	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"id": keyID}).One(&webHook)
 	if err1 != nil {
 		allWasGood = false
@@ -344,6 +362,10 @@ func (db *MongoDbStruct) DeleteWebHook(keyID string) (WebHookStruct, error) {
 }
 
 func (db *MongoDbStruct) DropTable() error {
+	if db.Count() == 0 {
+		return nil
+	}
+
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
 		panic(err)
