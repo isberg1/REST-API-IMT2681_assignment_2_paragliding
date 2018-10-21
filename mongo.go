@@ -307,3 +307,53 @@ func (db *MongoDbStruct) counterReset(webHookArray []WebHookStruct) {
 		}
 	}
 }
+func (db *MongoDbStruct) GetWebHook(keyID string) (WebHookStruct, bool) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	allWasGood := true
+	webHook := WebHookStruct{}
+
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"id": keyID}).One(&webHook)
+	if err1 != nil {
+		allWasGood = false
+	}
+	return webHook, allWasGood
+}
+
+func (db *MongoDbStruct) DeleteWebHook(keyID string) (WebHookStruct, error) {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	webHook := WebHookStruct{}
+	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"id": keyID}).One(&webHook)
+	if err1 != nil {
+		return WebHookStruct{}, err1
+	}
+	err2 := session.DB(db.DatabaseName).C(db.collection).Remove(bson.M{"id": keyID})
+	if err2 != nil {
+		return WebHookStruct{}, err2
+	}
+	return webHook, nil
+}
+
+func (db *MongoDbStruct) DropTable() error {
+	session, err := mgo.Dial(db.Host)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	err1 := session.DB(db.DatabaseName).C(db.collection).DropCollection()
+	if err1 != nil {
+		return err1
+	}
+
+	return nil
+}

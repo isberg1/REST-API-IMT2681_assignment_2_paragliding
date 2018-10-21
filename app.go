@@ -45,17 +45,20 @@ var StartUpTime = time.Now()
 // GlobalDebug used in debugging
 var GlobalDebug = false
 
-//________________________________________________________________________
+//________made basic admin handlers
+//tested remote database ________________________________________________________________
 
 func main() {
 
 	MgoTrackDB.InitTrackCollection("test", "mainCollection", "mongodb://127.0.0.1:27017")
 	MgoWebHookDB.InitWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
+	//mongodb://testuser:test123@ds235833.mlab.com:35833/teststrudentdb
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
 	r.HandleFunc("/", all)
 
+	r.HandleFunc("/{paragliding:paragliding[/]?}", rederect).Methods("GET")
 	r.HandleFunc("/paragliding/{api:api[/]?}", api).Methods("GET")
 	r.HandleFunc("/paragliding/api/{track:track[/]?}", getFiles).Methods("GET")
 	r.HandleFunc("/paragliding/api/{track:track[/]?}", postFile).Methods("POST")
@@ -71,21 +74,25 @@ func main() {
 	r.HandleFunc("/paragliding/api/ticker/{timestamp}", apiTimestamp).Methods("GET")
 	//POST /paragliding/api/webhook/new_track/
 	r.HandleFunc("/paragliding/api/webhook/{new_track:new_track[/]?}", WebhookNewTrack).Methods("POST")
+	//GET /api/webhook/new_track/<webhook_id>
+	r.HandleFunc("/paragliding/api/webhook/new_track/{webhook_id}{slash:[/]?}", Webhook_id).Methods("GET")
+	//DELETE /api/webhook/new_track/<webhook_id>
+	r.HandleFunc("/paragliding/api/webhook/new_track/{webhook_id}{slash:[/]?}", deleteWebhook).Methods("DELETE")
+	//GET /admin/api/tracks_count
+	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminTrackscount).Methods("GET")
+	//DELETE /admin/api/tracks
+	r.HandleFunc("/admin/api/{track:tracks[/]?}", trackDropTable).Methods("DELETE")
 
 	r.HandleFunc("/test", printRespons).Methods("POST")
 	/*
 		//
 
 
-		//GET /api/webhook/new_track/<webhook_id>
-		r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", apiWebhookNew_trackWebhook_id).Methods("GET")
-		//DELETE /api/webhook/new_track/<webhook_id>
-		r.HandleFunc("/api/webhook/new_track/{webhook_id}{slash:[/]?}", delApiWebhookNew_trackWebhook_id).Methods("DELETE")
 
-		//GET /admin/api/tracks_count
-		r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminApiTracks_count).Methods("GET")
-		//DELETE /admin/api/tracks
-		r.HandleFunc("/admin/api/{track:tracks[/]?}", apiTicker).Methods("DELETE")
+
+
+		/
+
 		/*
 
 			http.HandleFunc("/paragliding/api/drop_table", dropTable)
@@ -139,13 +146,14 @@ func dropTable(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func printRespons(w http.ResponseWriter, r *http.Request) {
+func rederect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/paragliding/api", http.StatusPermanentRedirect)
+}
 
+func printRespons(w http.ResponseWriter, r *http.Request) {
 	a, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("printRespons", err)
 	}
-
 	fmt.Println(string(a))
-
 }

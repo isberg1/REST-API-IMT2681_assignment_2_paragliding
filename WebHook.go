@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"time"
 )
@@ -66,11 +67,11 @@ func postToWebHooks(w http.ResponseWriter, processingStartTime time.Time) []WebH
 
 func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime time.Time) error {
 	/*
-		{
-	   "t_latest": <latest added timestamp of the entire collection>,
-	   "tracks": [<id1>, <id2>, ...]
-	   "processing": <time in ms of how long it took to process the request>
-	}
+			{
+		   "t_latest": <latest added timestamp of the entire collection>,
+		   "tracks": [<id1>, <id2>, ...]
+		   "processing": <time in ms of how long it took to process the request>
+		}
 	*/
 
 	var ids []ResponsID
@@ -91,7 +92,38 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	a, _ := json.Marshal(&temp)
 	//fmt.Println(temp)
 
+	// Todo post to right host (webHook.WebHookURL )
 	http.Post("http://localhost:8080/test", contentType, bytes.NewBuffer(a))
 
 	return nil
+}
+
+func Webhook_id(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	webHook, ok := MgoWebHookDB.GetWebHook(vars["webhook_id"])
+	if !ok {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	json.NewEncoder(w).Encode(SimpleWebHookStruct{
+		WebHookURL:      webHook.WebHookURL,
+		MinTriggerValue: webHook.MinTriggerValue,
+	})
+}
+
+func deleteWebhook(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	webHook, err := MgoWebHookDB.DeleteWebHook(vars["webhook_id"])
+	if err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	json.NewEncoder(w).Encode(SimpleWebHookStruct{
+		WebHookURL:      webHook.WebHookURL,
+		MinTriggerValue: webHook.MinTriggerValue,
+	})
 }
