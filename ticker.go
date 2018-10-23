@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 ///api/ticker/latest
@@ -20,7 +21,7 @@ func apiTtickerLatest(w http.ResponseWriter, r *http.Request) {
 	*/
 	w.Header().Add("Content-Type", "text/plain")
 
-	timeStamp, ok := MgoTrackDB.GetLatest()
+	timeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -50,8 +51,8 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 	*/
 	startTime := time.Now()
 	w.Header().Add("Content-Type", "application/json")
-
-	if MgoTrackDB.Count() == 0 {
+	// if DB is empty
+	if MgoTrackDB.count() == 0 {
 		/* alternative sulution:
 		ticker := Ticker{
 			TLatest: -1,
@@ -66,41 +67,43 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	latestimeStamp, ok := MgoTrackDB.GetLatest()
+	latestimeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
 	var nextTimeStamp int64
-	nextTimeStamp, ok = MgoTrackDB.GetOldestTimeStamp()
+	nextTimeStamp, ok = MgoTrackDB.getOldestMetaByTimeStamp()
 	if !ok {
 		http.Error(w, "", http.StatusNoContent)
 		return
 	}
+	// get the nr of  ID entries to be added in the response
 	nr, err := getPagingNr()
 	if err != nil {
 		http.Error(w, "serverside error", http.StatusInternalServerError)
 	}
-	if MgoTrackDB.Count() < nr {
-		nr = MgoTrackDB.Count()
+	// if there is less document entries in the database then spesified from  getPagingNr(), then adjust "nr"
+	if MgoTrackDB.count() < nr {
+		nr = MgoTrackDB.count()
 	}
 
 	var idArray = make([]ResponsID, 0, 0)
 
-	firsID, ok := MgoTrackDB.GetMetaByTimstamp(nextTimeStamp)
+	firsID, ok := MgoTrackDB.getMetaByTimstamp(nextTimeStamp)
 	if !ok {
 		http.Error(w, "", http.StatusNoContent)
 		return
 	}
-	idArray = append(idArray, ResponsID{ID: firsID.Id})
+	idArray = append(idArray, ResponsID{ID: firsID.ID})
 
 	for i := 1; i < nr; i++ {
-		temp, err1 := MgoTrackDB.GetBiggerThen(nextTimeStamp)
+		temp, err1 := MgoTrackDB.getMetaBiggerThen(nextTimeStamp)
 		if err1 != nil {
-			http.Error(w, "serverside error(GetBiggerThen)", http.StatusInternalServerError)
+			http.Error(w, "serverside error(getMetaBiggerThen)", http.StatusInternalServerError)
 			return
 		}
-		idArray = append(idArray, ResponsID{ID: temp.Id})
+		idArray = append(idArray, ResponsID{ID: temp.ID})
 		nextTimeStamp = temp.TimeStamp
 	}
 
@@ -112,7 +115,11 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 		Processing: time.Since(startTime).Nanoseconds() / int64(time.Millisecond),
 	}
 
-	json.NewEncoder(w).Encode(ticker)
+	err2 := json.NewEncoder(w).Encode(ticker)
+	if err2 != nil {
+		http.Error(w, "serverside error(json.NewEncoder(w).Encode(ticker))", http.StatusNoContent)
+		return
+	}
 
 }
 
@@ -124,8 +131,8 @@ func getPagingNr() (int, error) {
 	}
 	temp, err := strconv.Atoi(nr)
 
-	if MgoTrackDB.Count() < temp {
-		temp = MgoTrackDB.Count()
+	if MgoTrackDB.count() < temp {
+		temp = MgoTrackDB.count()
 	}
 
 	return temp, err
@@ -148,7 +155,7 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 
 	startTime := time.Now()
 
-	if MgoTrackDB.Count() == 0 || MgoTrackDB.Count() == 1 {
+	if MgoTrackDB.count() == 0 || MgoTrackDB.count() == 1 {
 		/* alternative sulution:
 		ticker := Ticker{
 			TLatest: -1,
@@ -167,43 +174,48 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
+	// extract timestamp from URL
 	nextTimeStamp, err := strconv.ParseInt(vars["timestamp"], 10, 64)
 	if err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	_, ok := MgoTrackDB.GetMetaByTimstamp(nextTimeStamp)
+	// if timestamp exits
+	_, ok := MgoTrackDB.getMetaByTimstamp(nextTimeStamp)
 	if !ok {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
+	// get the nr of  ID entries to be added in the response
 	nr, err := getPagingNr()
 	if err != nil {
 		http.Error(w, "serverside error", http.StatusInternalServerError)
 	}
-	if MgoTrackDB.Count() < nr {
-		nr = MgoTrackDB.Count()
+	// if there is less document entries in the database then spesified from  getPagingNr(), then adjust "nr"
+	if MgoTrackDB.count() < nr {
+		nr = MgoTrackDB.count()
 	}
 
 	var idArray = make([]ResponsID, 0, 0)
-	firsID, err1 := MgoTrackDB.GetBiggerThen(nextTimeStamp)
+
+	firsID, err1 := MgoTrackDB.getMetaBiggerThen(nextTimeStamp)
 	if err1 != nil {
-		http.Error(w, "serverside error(GetBiggerThen111)", http.StatusNoContent)
+		http.Error(w, "serverside error(getMetaBiggerThen)", http.StatusNoContent)
 		return
 	}
-	idArray = append(idArray, ResponsID{firsID.Id})
+	idArray = append(idArray, ResponsID{firsID.ID})
 	nextTimeStamp = firsID.TimeStamp
 
 	for i := 0; i < nr-1; i++ {
-		temp, err1 := MgoTrackDB.GetBiggerThen(nextTimeStamp)
+		temp, err1 := MgoTrackDB.getMetaBiggerThen(nextTimeStamp)
 		if err1 != nil {
 			continue
 		}
-		idArray = append(idArray, ResponsID{ID: temp.Id})
+		idArray = append(idArray, ResponsID{ID: temp.ID})
 		nextTimeStamp = temp.TimeStamp
 	}
 
-	latestimeStamp, ok := MgoTrackDB.GetLatest()
+	latestimeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -217,6 +229,9 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 		Processing: time.Since(startTime).Nanoseconds() / int64(time.Millisecond),
 	}
 
-	json.NewEncoder(w).Encode(ticker)
-
+	err2 := json.NewEncoder(w).Encode(ticker)
+	if err2 != nil {
+		http.Error(w, "serverside error(json.NewEncoder(w).Encode(ticker))", http.StatusNoContent)
+		return
+	}
 }

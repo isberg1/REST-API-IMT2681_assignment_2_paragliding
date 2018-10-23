@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
-func WebhookNewTrack(w http.ResponseWriter, r *http.Request) {
+func webhookNewTrack(w http.ResponseWriter, r *http.Request) {
 
 	var webHook WebHookStruct
 	err := json.NewDecoder(r.Body).Decode(&webHook)
@@ -28,19 +29,19 @@ func WebhookNewTrack(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "serverside error(getUniqueWebHookkID)", http.StatusInternalServerError)
 		return
 	}
-	webHook.Id = id
+	webHook.ID = id
 	webHook.Counter = webHook.MinTriggerValue
 	webHook.TimeStamp = getTimestamp()
 
-	err1 := MgoWebHookDB.Add(webHook)
+	err1 := MgoWebHookDB.add(webHook)
 	if err1 != nil {
-		http.Error(w, "serverside error(MgoWebHookDB.Add)", http.StatusInternalServerError)
+		http.Error(w, "serverside error(MgoWebHookDB.add)", http.StatusInternalServerError)
 		return
 	}
 
 }
 
-func InvokWebHooks(w http.ResponseWriter) {
+func invokWebHooks(w http.ResponseWriter) {
 
 	processingStartTime := time.Now()
 
@@ -54,7 +55,7 @@ func postToWebHooks(w http.ResponseWriter, processingStartTime time.Time) []WebH
 
 	var webHook []WebHookStruct
 
-	webHook, err := MgoWebHookDB.GetPostArray()
+	webHook, err := MgoWebHookDB.getPostArray()
 	if err != nil {
 		fmt.Println("unable to get post array", err)
 	}
@@ -78,13 +79,13 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	*/
 
 	var ids []ResponsID
-	ids, err := MgoTrackDB.GetXLatest(webHook.MinTriggerValue)
+	ids, err := MgoTrackDB.getLatestMetaIDs(webHook.MinTriggerValue)
 	if err != nil {
 		fmt.Println("unable to get []ResponsID ", err)
 		return err
 	}
 
-	latest, ok := MgoTrackDB.GetLatest()
+	latest, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		fmt.Println("unable to post get latest Track ")
 		return errors.New("unable to get latest track")
@@ -94,8 +95,10 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 		Tracks:     ids,
 		Processing: time.Since(processingStartTime).Nanoseconds() / int64(time.Millisecond),
 	}
-	a, _ := json.Marshal(&temp)
-	//fmt.Println(temp)
+	a, err2 := json.Marshal(&temp)
+	if err2 != nil {
+		http.Error(w, "serverside error(json.Marshal(&temp))", http.StatusInternalServerError)
+	} //fmt.Println(temp)
 
 	// Todo post to right host (webHook.WebHookURL )
 	_, err1 := http.Post("http://localhost:8080/test", "application/json", bytes.NewBuffer(a))
@@ -106,10 +109,10 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	return nil
 }
 
-func Webhook_id(w http.ResponseWriter, r *http.Request) {
+func webhookID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	webHook, ok := MgoWebHookDB.GetWebHook(vars["webhook_id"])
+	webHook, ok := MgoWebHookDB.getWebHookByID(vars["webhookID"])
 	if !ok {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
@@ -124,7 +127,7 @@ func Webhook_id(w http.ResponseWriter, r *http.Request) {
 func deleteWebhook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	webHook, err := MgoWebHookDB.DeleteWebHook(vars["webhook_id"])
+	webHook, err := MgoWebHookDB.deleteWebHook(vars["webhookID"])
 	if err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return

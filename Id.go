@@ -4,21 +4,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/marni/goigc"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/marni/goigc"
 )
 
-// proccesses GET for "paragliding/api/Igc/Id"
+// proccesses GET for "paragliding/api/Igc/ID"
 func returnID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
 
-	igcStruct, ok := MgoTrackDB.Get(vars["Id"])
+	igcStruct, ok := MgoTrackDB.getMetaByID(vars["ID"])
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -32,8 +33,11 @@ func returnID(w http.ResponseWriter, r *http.Request) {
 		TrackLength: igcStruct.TrackLength,
 	}
 
-	// return IGC meta in json format for Id 's'
-	json.NewEncoder(w).Encode(simpleIgcStruct)
+	// return IGC meta in json format for ID 's'
+	err := json.NewEncoder(w).Encode(simpleIgcStruct)
+	if err != nil {
+		http.Error(w, "severside error(returnID)", http.StatusInternalServerError)
+	}
 }
 
 // calculate the track_lenght in km
@@ -62,7 +66,7 @@ func parseFile(URLfile string) (Meta, error) {
 	}
 	// return a Meta struct with relevant data
 	return Meta{
-			Id:          id,
+			ID:          id,
 			TimeStamp:   getTimestamp(),
 			URL:         URLfile,
 			HDate:       track.Date.String(),
@@ -73,7 +77,7 @@ func parseFile(URLfile string) (Meta, error) {
 		nil
 }
 
-// processes GET for url "paragliding/api/Igc/Id/feild"
+// processes GET for url "paragliding/api/Igc/ID/feild"
 func returnField(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -81,7 +85,7 @@ func returnField(w http.ResponseWriter, r *http.Request) {
 	// set response type for http header
 	http.Header.Add(w.Header(), "content-type", "application/json")
 
-	igcStruct, ok := MgoTrackDB.Get(vars["Id"])
+	igcStruct, ok := MgoTrackDB.getMetaByID(vars["ID"])
 	if !ok {
 		fmt.Println("from not found")
 		w.WriteHeader(http.StatusNotFound)

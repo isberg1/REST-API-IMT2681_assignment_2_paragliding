@@ -65,5 +65,8 @@ func api(w http.ResponseWriter, r *http.Request) {
 	//get relevant info
 	info := GetIgcinfoAPI{Uptime: getUptime(), Info: infoSting, Version: getVersion()}
 	//convert info to json and write back to the client
-	json.NewEncoder(w).Encode(&info)
+	err := json.NewEncoder(w).Encode(&info)
+	if err != nil {
+		http.Error(w, "serverside error(api)", http.StatusInternalServerError)
+	}
 }

@@ -33,9 +33,13 @@ func postFile(w http.ResponseWriter, r *http.Request) {
 	// and respond to client with conformation message
 
 	//addToMap(trackStruct)
-	respondToClient(w, trackStruct.Id)
-	MgoTrackDB.Add(trackStruct)
-	InvokWebHooks(w)
+	respondToClient(w, trackStruct.ID)
+	err4 := MgoTrackDB.add(trackStruct)
+	if err4 != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	invokWebHooks(w)
 
 }
 
@@ -47,13 +51,15 @@ func respondToClient(w http.ResponseWriter, s string) {
 	w.WriteHeader(http.StatusCreated)
 	// write conformation massage back to client
 	response := ResponsID{ID: s} // empty struct needed to make empty json array
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "serverside error(respondToClient)", http.StatusInternalServerError)
+	}
 }
 
-//Todo find a beter Id system then count (invalid if somthing is deleted)
-// makes a unique Id for Posted content to be stored in track collection
+// makes a unique ID for Posted content to be stored in track collection
 func getUniqueTrackID() (string, bool) {
-	count := MgoTrackDB.Count()
+	count := MgoTrackDB.count()
 	if count == -1 {
 		return "", false
 	}
@@ -61,17 +67,17 @@ func getUniqueTrackID() (string, bool) {
 		return "1", true
 	}
 
-	timeStamp, ok := MgoTrackDB.GetLatest()
+	timeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		return "", false
 	}
 
-	meta, ok := MgoTrackDB.GetWebHookByTimstamp(timeStamp)
+	meta, ok := MgoTrackDB.getWebHookByTimstamp(timeStamp)
 	if !ok {
 		return "", false
 	}
 
-	strID, err := strconv.Atoi(meta.Id)
+	strID, err := strconv.Atoi(meta.ID)
 	if err != nil {
 		fmt.Println(err)
 		return "", false
@@ -81,10 +87,9 @@ func getUniqueTrackID() (string, bool) {
 	return id, true
 }
 
-//Todo find a beter Id system then count (invalid if somthing is deleted)
-// makes a unique Id for Posted content to be stored in webhook collection
+// makes a unique ID for Posted content to be stored in webhook collection
 func getUniqueWebHookkID() (string, bool) {
-	count := MgoWebHookDB.Count()
+	count := MgoWebHookDB.count()
 	if count == -1 {
 		return "", false
 	}
@@ -92,17 +97,17 @@ func getUniqueWebHookkID() (string, bool) {
 		return "1", true
 	}
 
-	timeStamp, ok := MgoWebHookDB.GetLatest()
+	timeStamp, ok := MgoWebHookDB.getLatestMetaTimestamp()
 	if !ok {
 		return "", false
 	}
 
-	webHook, ok := MgoWebHookDB.GetWebHookByTimstamp(timeStamp)
+	webHook, ok := MgoWebHookDB.getWebHookByTimstamp(timeStamp)
 	if !ok {
 		return "", false
 	}
 
-	strID, err := strconv.Atoi(webHook.Id)
+	strID, err := strconv.Atoi(webHook.ID)
 	if err != nil {
 		fmt.Println(err)
 		return "", false
@@ -112,7 +117,7 @@ func getUniqueWebHookkID() (string, bool) {
 	return id, true
 }
 
-// processes GET content for url "/paragliding/api/Igc/"
+// processes GET content for url "/paragliding/api/tracks/"
 func getFiles(w http.ResponseWriter, r *http.Request) {
 	//set http header content-type
 	http.Header.Add(w.Header(), "content-type", "application/json")
@@ -121,7 +126,7 @@ func getFiles(w http.ResponseWriter, r *http.Request) {
 	// transfer all IgcMap key to its own slice"keySlice"
 	// and put the keys into a slice "keySlice"
 
-	ids, ok := MgoTrackDB.GetAllKeys()
+	ids, ok := MgoTrackDB.getAllKeys()
 	if !ok {
 		http.Error(w, "serverside error", http.StatusInternalServerError)
 	}
@@ -131,16 +136,23 @@ func getFiles(w http.ResponseWriter, r *http.Request) {
 		keySlice = append(keySlice, temp)
 	}
 	// special case for no IGC file registered
-	if MgoTrackDB.Count() < 1 {
+	if MgoTrackDB.count() < 1 {
 		// make an empty array
 		keySlice = make([]ResponsID, 0)
 		// write empty json array back to client
-		json.NewEncoder(w).Encode(keySlice)
+		err := json.NewEncoder(w).Encode(keySlice)
+		if err != nil {
+			http.Error(w, "serverside error(json.NewEncoder(w).Encode(keySlice))", http.StatusInternalServerError)
+		}
 		return
 	}
 
 	// general case
 	w.WriteHeader(http.StatusOK)
 	// write all keys for all registered IGC files back to client
-	json.NewEncoder(w).Encode(keySlice)
+	err := json.NewEncoder(w).Encode(keySlice)
+	if err != nil {
+		http.Error(w, "serverside error(json.NewEncoder(w).Encode(keySlice))", http.StatusInternalServerError)
+		return
+	}
 }

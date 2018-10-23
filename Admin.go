@@ -5,28 +5,29 @@ import (
 	"net/http"
 )
 
-//GET /admin/api/tracks_count
-func adminTrackscount(w http.ResponseWriter, r *http.Request) {
+// returns the size of the IGC Meta tracks database collection
+func adminTracksCount(w http.ResponseWriter, r *http.Request) {
 	// TODO authentication
 
-	count := MgoTrackDB.Count()
+	count := MgoTrackDB.count()
 
 	http.Header.Add(w.Header(), "content-type", "text/plain")
 
 	fmt.Fprintln(w, count)
 }
 
+// deletes all IGC Meta tracks from database collection
 func trackDropTable(w http.ResponseWriter, r *http.Request) {
 	// TODO authentication
 	http.Header.Add(w.Header(), "content-type", "text/plain")
 
-	count := MgoTrackDB.Count()
+	count := MgoTrackDB.count()
 	if count < 1 {
 		fmt.Fprintln(w, count)
 		return
 	}
 
-	err := MgoTrackDB.DropTable()
+	err := MgoTrackDB.dropTable()
 	if err != nil {
 		http.Error(w, "serverside error, unable to drop collection", http.StatusInternalServerError)
 		return

@@ -30,11 +30,11 @@ func Test_startServer(t *testing.T) {
 	// start local server
 	go main()
 	time.Sleep(2 * time.Second)
-	err := MgoTrackDB.DropTable()
+	err := MgoTrackDB.dropTable()
 	if err != nil {
 		t.Error("unable to drop collection", err)
 	}
-	err1 := MgoWebHookDB.DropTable()
+	err1 := MgoWebHookDB.dropTable()
 	if err1 != nil {
 		t.Error("unable to drop collection", err)
 	}
@@ -185,7 +185,7 @@ func Test_PostInvalidContent(t *testing.T) {
 			t.Error("error illegal POST permitted for: ", res)
 		}
 	} // test if IgcMap length is as expected
-	if MgoTrackDB.Count() != 0 {
+	if MgoTrackDB.count() != 0 {
 		t.Error("error invalid content posted in data structure: IgcMap")
 	}
 }
@@ -232,8 +232,8 @@ func Test_PostValidContent(t *testing.T) {
 		}
 	}
 	// check that nr of entries in IgcMap is correct
-	if MgoTrackDB.Count() != (len(postURL) + len(igcULR)) {
-		t.Error("error data structure does not contain expected nr of values: ", MgoTrackDB.Count())
+	if MgoTrackDB.count() != (len(postURL) + len(igcULR)) {
+		t.Error("error data structure does not contain expected nr of values: ", MgoTrackDB.count())
 	}
 }
 
@@ -255,12 +255,12 @@ func validatePostResponse(p *http.Response) error {
 		return errors.New("defective regex compilation ")
 	}
 	if !test {
-		return errors.New("incorrect return Id string based on regex match ")
+		return errors.New("incorrect return ID string based on regex match ")
 	}
 	return nil
 }
 
-// tries to get the json array of all stored Igc file Id's
+// tries to get the json array of all stored Igc file ID's
 func Test_getAllIDs(t *testing.T) {
 	expected := http.StatusOK
 
@@ -281,7 +281,7 @@ func Test_getAllIDs(t *testing.T) {
 	if err3 != nil {
 		t.Error("error unable to unmarshal json array", err3)
 	}
-	if len(slice) != MgoTrackDB.Count() {
+	if len(slice) != MgoTrackDB.count() {
 		t.Error("error not the same nr of objects in local and global data structures")
 	}
 }
@@ -300,7 +300,7 @@ func Test_getFields(t *testing.T) {
 		"track_length",
 	)
 
-	for key := 1; key == MgoTrackDB.Count(); key++ {
+	for key := 1; key == MgoTrackDB.count(); key++ {
 		for _, field := range metaKey {
 
 			strKey := strconv.Itoa(key)
@@ -397,12 +397,12 @@ func Test_apiTicker(t *testing.T) {
 	if err3 != nil {
 		t.Error("error unable to unmarshal json array", err3)
 	}
-	time, ok := MgoTrackDB.GetLatest()
+	timeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		t.Error("error unable to get latest timestamp")
 	}
 
-	if ticker.TLatest != time {
+	if ticker.TLatest != timeStamp {
 		t.Error("error wrong timestamp")
 	}
 	pagingNr, err4 := getPagingNr()
@@ -417,7 +417,7 @@ func Test_apiTicker(t *testing.T) {
 func Test_WebhookNewTrack(t *testing.T) {
 
 	expectedStatusCode := 200
-	//dbCountPriorToPost := MgoWebHookDB.Count()
+	//dbCountPriorToPost := MgoWebHookDB.count()
 
 	subscriberWebHook := localProjectURLroot + "/test"
 	postURL := localProjectURLroot + "paragliding/api/webhook/new_track"
@@ -442,7 +442,7 @@ func Test_WebhookNewTrack(t *testing.T) {
 		t.Error("error unable to read Post.Body : ", err3)
 	}
 
-	responce, ok := MgoWebHookDB.GetWebHook(string(id))
+	responce, ok := MgoWebHookDB.getWebHookByID(string(id))
 	if !ok {
 		t.Error("error unable was unsuccessful at posting to webHook Subscription", responce, "--", string(id))
 	}
@@ -450,11 +450,11 @@ func Test_WebhookNewTrack(t *testing.T) {
 }
 
 func Test_cleanUp(t *testing.T) {
-	err := MgoTrackDB.DropTable()
+	err := MgoTrackDB.dropTable()
 	if err != nil {
 		t.Error("unable to drop collection", err)
 	}
-	err1 := MgoWebHookDB.DropTable()
+	err1 := MgoWebHookDB.dropTable()
 	if err1 != nil {
 		t.Error("unable to drop collection", err)
 	}
