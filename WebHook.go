@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -37,7 +38,6 @@ func WebhookNewTrack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, id)
 }
 
 func InvokWebHooks(w http.ResponseWriter) {
@@ -81,11 +81,13 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	ids, err := MgoTrackDB.GetXLatest(webHook.MinTriggerValue)
 	if err != nil {
 		fmt.Println("unable to get []ResponsID ", err)
+		return err
 	}
 
 	latest, ok := MgoTrackDB.GetLatest()
 	if !ok {
 		fmt.Println("unable to post get latest Track ")
+		return errors.New("unable to get latest track")
 	}
 	temp := InvokeWebHookStruct{
 		TLatest:    latest,
@@ -96,7 +98,10 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	//fmt.Println(temp)
 
 	// Todo post to right host (webHook.WebHookURL )
-	http.Post("http://localhost:8080/test", "application/json", bytes.NewBuffer(a))
+	_, err1 := http.Post("http://localhost:8080/test", "application/json", bytes.NewBuffer(a))
+	if err1 != nil {
+		return err1
+	}
 
 	return nil
 }

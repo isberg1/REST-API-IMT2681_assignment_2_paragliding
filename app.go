@@ -92,6 +92,7 @@ func rederect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/paragliding/api", http.StatusPermanentRedirect)
 }
 
+// exists for testing purposes
 func printRespons(w http.ResponseWriter, r *http.Request) {
 	a, err := ioutil.ReadAll(r.Body)
 	if err != nil {
