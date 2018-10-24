@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/abbot/go-http-auth"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -36,22 +37,25 @@ var StartUpTime = time.Now()
 
 func main() {
 
+	// local DB
 	MgoTrackDB.initTrackCollection("test", "mainCollection", "mongodb://127.0.0.1:27017")
 	MgoWebHookDB.initWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
-
-	//	MgoTrackDB.initTrackCollection("paragliding", "tracks", "mongodb://app.go:mlabpass123@ds233323.mlab.com:33323/paragliding")
-	//	MgoWebHookDB.initWebHookCollection("paragliding", "WebHook", "mongodb://app.go:mlabpass123@ds233323.mlab.com:33323/paragliding")
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
 	r.HandleFunc("/", all)
-
+	//GET /paragliding
 	r.HandleFunc("/{paragliding:paragliding[/]?}", rederect).Methods("GET")
+	//GET /paragliding/api
 	r.HandleFunc("/paragliding/{api:api[/]?}", api).Methods("GET")
+	//GET /paragliding/api/track
 	r.HandleFunc("/paragliding/api/{track:track[/]?}", getFiles).Methods("GET")
+	//POST /paragliding/api/track
 	r.HandleFunc("/paragliding/api/{track:track[/]?}", postFile).Methods("POST")
+	//GET /paragliding/api/track/ID
 	r.HandleFunc("/paragliding/api/track/{ID:[1-9]+}", returnID).Methods("GET")
 	r.HandleFunc("/paragliding/api/track/{ID:[1-9]+}/", returnID).Methods("GET")
+	//GET /paragliding/api/track/ID/field
 	r.HandleFunc("/paragliding/api/track/{ID:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}", returnField).Methods("GET")
 	r.HandleFunc("/paragliding/api/track/{ID:[1-9]+}/{field:h_date|pilot|glider|glider_id|track_length}/", returnField).Methods("GET")
 	//GET /paragliding/api/ticker/
@@ -66,11 +70,13 @@ func main() {
 	r.HandleFunc("/paragliding/api/webhook/new_track/{webhookID}{slash:[/]?}", webhookID).Methods("GET")
 	//DELETE /api/webhook/new_track/<webhookID>
 	r.HandleFunc("/paragliding/api/webhook/new_track/{webhookID}{slash:[/]?}", deleteWebhook).Methods("DELETE")
+	// set up basic http authentication
+	authenticator := auth.NewBasicAuthenticator("calm-mesa-59678.herokuapp.com/", Secret)
 	//GET /admin/api/tracks_count
-	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", adminTracksCount).Methods("GET")
+	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", authenticator.Wrap(adminTracksCount)).Methods("GET")
 	//DELETE /admin/api/tracks
-	r.HandleFunc("/admin/api/{track:tracks[/]?}", trackDropTable).Methods("DELETE")
-
+	r.HandleFunc("/admin/api/{track:tracks[/]?}", authenticator.Wrap(trackDropTable)).Methods("DELETE")
+	// for testing of webhook posts
 	r.HandleFunc("/test", printRespons).Methods("POST")
 
 	port := os.Getenv("PORT")
