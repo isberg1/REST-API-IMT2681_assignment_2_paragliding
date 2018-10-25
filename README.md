@@ -1,70 +1,85 @@
  README #
 
 ### What is this repository for? ###
-Assignment 1 in IMT2681-2018
+Assignment 2 in IMT2681-2018
 
-Assignment URL: https://sheltered-garden-37170.herokuapp.com/igcinfo/api/
+Assignment URL: https://calm-mesa-59678.herokuapp.com/paragliding
 
 ### How do I test the remote Heroku api ###
 
 From bash terminal use the following commads:
 
-Get information about application:
+GET /paragliding/
 
-     $ curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://sheltered-garden-37170.herokuapp.com/igcinfo/api/
-     
-Output
-	     
-         {"Uptime":"PT6M0S","Info":"Service for IGC tracks.","Version":"1.0.0"}
-          200 application/json
+  curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/
 
-post content:
+GET /api
 
-      curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"url": "https://raw.githubusercontent.com/marni/goigc/master/testdata/optimize-long-flight-1.igc"}' -X POST https://sheltered-garden-37170.herokuapp.com/igcinfo/api/igc
+  curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api
 
-Output:
-     
-     {"id":"IGC_file_1"}
-     201 application/json
-     
-Get array with ID's of all strored objects:
+POST /api/track
 
-    $ curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://sheltered-garden-37170.herokuapp.com/igcinfo/api/igc
+  curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"url": "http://skypolaris.org/wp-content/uploads/IGS%20Files/Madrid%20to%20Jerez.igc"}' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/track
 
-Output:
-     
-     [{"id":"IGC_file_1"},]
-     200 application/json
-     
-Get meta information about a object:
+GET /api/track
 
-     $ curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://sheltered-garden-37170.herokuapp.com/igcinfo/api/igc/IGC_file_1
+  curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track
 
-Output:
+GET /api/track/<id>
 
-    {"h_date":"2017-08-07 00:00:00 +0000 UTC","pilot":"Pascal GENIN","glider":"LS 6","glider_id":"D-5860","track_length":507}
-    200 application/json
-     
-Get a spesified meta infromation field from a object:
+  curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track/1
 
-     curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://sheltered-garden-37170.herokuapp.com/igcinfo/api/igc/IGC_file_1/glider_id
+GET /api/track/<id>/<field>
 
-Output:
+  curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track/1/pilot
 
-    D-5860
-    200 text/plain
+GET /api/ticker/latest
 
+  curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/ticker/latest
 
-Delete all content 
+GET /api/ticker/
 
-    $ curl  --write-out "%{http_code}"  -X DELETE https://sheltered-garden-37170.herokuapp.com/igcinfo/api/drop_table
-    
-Output
-    
-     200
+  curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/ticker/
+
+GET /api/ticker/<timestamp>
+
+!!! write timestamp at the end of command !!!
+  curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/ticker/
+
+POST /api/webhook/new_track/
+
+// TODO make url handler for diplaying webhook content when min_trigger_value is invoced
+  curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"web_hook_url": "http://raw.githubusercontent.com/marni/goigc/", "min_trigger_value" : 5 }' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track
+
+GET /api/webhook/new_track/<webhook_id>
+
+  curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track/1
+
+DELETE /api/webhook/new_track/<webhook_id>
+
+  curl  --write-out "\n%{http_code} %{content_type}\n"  -X DELETE https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track/1
+
+GET /admin/api/tracks_count
+
+no auth:
+
+  curl  --write-out "\n%{http_code} %{content_type}\n"  -X GET https://calm-mesa-59678.herokuapp.com/admin/api/tracks_count
+with auth:
+
+  curl  -u overlord:pass --write-out "\n%{http_code} %{content_type}\n"  -X GET https://calm-mesa-59678.herokuapp.com/admin/api/tracks_count
+
+DELETE /admin/api/tracks
+
+no auth:
+
+  curl  --write-out "\n%{http_code} %{content_type}\n"  -X DELETE https://calm-mesa-59678.herokuapp.com/admin/api/tracks
+with auth:
+
+  curl  -u overlord:pass --write-out "\n%{http_code} %{content_type}\n"  -X DELETE https://calm-mesa-59678.herokuapp.com/admin/api/tracks
+
 
 ### How do I use the program? ###
-The following has been tested on 2 ubuntu 18.04, one dualbooted and one VM, and 1 ubuntu 16.04 VM
+
 
 In my go setup i was using go version: go1.11
 I nedded to install "gcc" to run the tests
@@ -74,66 +89,7 @@ I nedded to install "gcc" to run the tests
 	git clone git@bitbucket.org:isberg/igcinfo.git
 	cd igcinfo/go-getting-started/
 	go run .
-	
-wait until "go run ." is done. this may take some time
-	
-Open an other bash terminal and use the following commads:
-The ouput will be the same as when testing the remote Heroku URL exept for the "Version" will say unavalable
 
-
-Get information about application:
-
-     $ curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET http://localhost:8080/igcinfo/api/
-     
-Output
-	     
-         {"Uptime":"PT6M0S","Info":"Service for IGC tracks.","Version":"1.0.0"}
-          200 application/json
-
-post content:
-
-      curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"url": "http://raw.githubusercontent.com/marni/goigc/master/testdata/optimize-long-flight-1.igc"}' -X POST http://localhost:8080/igcinfo/api/igc
-
-Output:
-     
-     {"id":"IGC_file_1"}
-     201 application/json
-     
-Get array with ID's of all strored objects:
-
-    $ curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET http://localhost:8080/igcinfo/api/igc
-
-Output:
-     
-     [{"id":"IGC_file_1"},]
-     200 application/json
-     
-Get meta information about a object:
-
-     $ curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET http://localhost:8080/igcinfo/api/igc/IGC_file_1
-
-Output:
-
-    {"h_date":"2017-08-07 00:00:00 +0000 UTC","pilot":"Pascal GENIN","glider":"LS 6","glider_id":"D-5860","track_length":507}
-    200 application/json
-     
-Get a spesified meta infromation field from a object:
-
-     curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET http://localhost:8080/igcinfo/api/igc/IGC_file_1/glider_id
-
-Output:
-
-    D-5860
-    200 text/plain
-
-
-Delete all content 
-
-    $ curl  --write-out "%{http_code}"  -X DELETE http://localhost:8080/igcinfo/api/drop_table
-    
-Output
-    
-     200
 
 
 
@@ -146,42 +102,37 @@ test 1:
       $ go tool vet --all .
 Result:
 
-     Everything OK
+
 
 test 2;
 
      $ golint .
-     
+
 Result:
 
-     Everything OK 
-     
+
+
 test 3:
 
-    $ go fmt . 
+    $ go fmt .
 
 Result:
 
-     Everything OK
-     
+
+
 test 4:
 
     $ go test .
-    
+
 Result:
 
-    PASS
-    ok  	github.com/heroku/go-getting-started	4.563s
-     
+
+
 test 5:
-     
+
     $ go test -cover
 
 Result:
-    
-    PASS
-    coverage: 77.8% of statements
-    ok  	github.com/heroku/go-getting-started	3.918s
+
+
       
-### Who do I talk to? ###
-Alexander Jakobsen, 16BITSEC, Studentnr: 473151, alexajak@stud.ntnu.no
