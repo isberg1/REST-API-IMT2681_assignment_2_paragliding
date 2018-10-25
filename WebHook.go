@@ -39,6 +39,8 @@ func webhookNewTrack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Fprint(w, webHook.ID)
+
 }
 
 func invokWebHooks(w http.ResponseWriter) {
@@ -87,7 +89,6 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 
 	latest, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
-		fmt.Println("unable to post get latest Track ")
 		return errors.New("unable to get latest track")
 	}
 	temp := InvokeWebHookStruct{
@@ -100,8 +101,7 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 		http.Error(w, "serverside error(json.Marshal(&temp))", http.StatusInternalServerError)
 	} //fmt.Println(temp)
 
-	// Todo post to right host (webHook.WebHookURL )
-	_, err1 := http.Post("http://localhost:8080/test", "application/json", bytes.NewBuffer(a))
+	_, err1 := http.Post(webHook.WebHookURL, "application/json", bytes.NewBuffer(a))
 	if err1 != nil {
 		return err1
 	}

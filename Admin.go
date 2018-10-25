@@ -33,7 +33,8 @@ func trackDropTable(w http.ResponseWriter, r *auth.AuthenticatedRequest /*r *htt
 	fmt.Fprint(w, count)
 }
 
-func Secret(user, realm string) string {
+// check to see if username and password is correct
+func secret(user, realm string) string {
 	if user == "overlord" {
 		//todo chang befor uploding
 		// alternatively password could be read from (encrypted)file

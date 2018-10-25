@@ -49,7 +49,7 @@ GET /api/ticker/<timestamp>
 POST /api/webhook/new_track/
 
 // TODO make url handler for diplaying webhook content when min_trigger_value is invoced
- 
+
      curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"web_hook_url": "http://raw.githubusercontent.com/marni/goigc/", "min_trigger_value" : 5 }' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track
 
 GET /api/webhook/new_track/<webhook_id>
@@ -98,42 +98,50 @@ I nedded to install "gcc" to run the tests
 
 code quality checking:
 
-test 1:  
+Static code analysis:  
 
-      $ go tool vet --all .
-Result:
-
-
-
-test 2;
-
-     $ golint .
+      go tool vet -all .
+      golint .
+      go fmt .
+      gometalinter -- metalinter .
 
 Result:
 
+      everything OK
 
 
-test 3:
+go test:
 
-    $ go fmt .
-
-Result:
-
-
-
-test 4:
-
-    $ go test .
+     go test -v-cover
 
 Result:
 
-
-
-test 5:
-
-    $ go test -cover
-
-Result:
-
-
-      
+      === RUN   Test_startServer
+      --- PASS: Test_startServer (2.00s)
+      === RUN   Test_httpConnection
+      --- PASS: Test_httpConnection (0.00s)
+      === RUN   Test_rubbishURL_local
+      --- PASS: Test_rubbishURL_local (0.00s)
+      === RUN   Test_igcinfoapi_local
+      --- PASS: Test_igcinfoapi_local (0.00s)
+      === RUN   Test_PostAtInvalidURL
+      --- PASS: Test_PostAtInvalidURL (0.00s)
+      === RUN   Test_PostInvalidContent
+      --- PASS: Test_PostInvalidContent (1.08s)
+      === RUN   Test_PostValidContent
+      --- PASS: Test_PostValidContent (2.39s)
+      === RUN   Test_getAllIDs
+      --- PASS: Test_getAllIDs (0.00s)
+      === RUN   Test_getFields
+      --- PASS: Test_getFields (0.00s)
+      === RUN   Test_apiTtickerLatest
+      --- PASS: Test_apiTtickerLatest (0.00s)
+      === RUN   Test_apiTicker
+      --- PASS: Test_apiTicker (0.01s)
+      === RUN   Test_WebhookNewTrack
+      --- PASS: Test_WebhookNewTrack (0.00s)
+      === RUN   Test_cleanUp
+      --- PASS: Test_cleanUp (0.02s)
+      PASS
+      coverage: 49.9% of statements
+      ok  	bitbucket.org/isberg/paragliding	(cached)	coverage: 49.9% of statements

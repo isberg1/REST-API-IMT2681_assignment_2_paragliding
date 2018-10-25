@@ -75,3 +75,10 @@ type mongoDbStruct struct {
 	DatabaseName string
 	collection   string
 }
+
+/*
+//Slack webhook message
+type SlackMessage struct {
+	Text string `json:"text"`
+}
+*/

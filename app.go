@@ -71,7 +71,7 @@ func main() {
 	//DELETE /api/webhook/new_track/<webhookID>
 	r.HandleFunc("/paragliding/api/webhook/new_track/{webhookID}{slash:[/]?}", deleteWebhook).Methods("DELETE")
 	// set up basic http authentication
-	authenticator := auth.NewBasicAuthenticator("calm-mesa-59678.herokuapp.com/", Secret)
+	authenticator := auth.NewBasicAuthenticator("calm-mesa-59678.herokuapp.com/", secret)
 	//GET /admin/api/tracks_count
 	r.HandleFunc("/admin/api/{track:tracks_count[/]?}", authenticator.Wrap(adminTracksCount)).Methods("GET")
 	//DELETE /admin/api/tracks
