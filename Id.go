@@ -31,6 +31,7 @@ func returnID(w http.ResponseWriter, r *http.Request) {
 		Glider:      igcStruct.Glider,
 		GliderID:    igcStruct.GliderID,
 		TrackLength: igcStruct.TrackLength,
+		URL:         igcStruct.URL,
 	}
 
 	// return IGC meta in json format for ID 's'
@@ -107,6 +108,8 @@ func returnField(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// generates a timestap. in order to prevent 2 posts from getting the
+// same timestamp i have protected the the timstamp generating statement with a Mutex
 func getTimestamp() int64 {
 	var mutex = &sync.Mutex{}
 	mutex.Lock()

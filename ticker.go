@@ -11,14 +11,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-///api/ticker/latest
+// prints the latest IGC track timestamp to  be posted in the DB
 func apiTtickerLatest(w http.ResponseWriter, r *http.Request) {
-	/*
-			What: returns the timestamp of the latest added track
-		Response type: text/plain
-		Response code: 200 if everything is OK, appropriate error code otherwise.
-		Response: <timestamp> for the latest added track
-	*/
+
 	w.Header().Add("Content-Type", "text/plain")
 
 	timeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
@@ -31,25 +26,10 @@ func apiTtickerLatest(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// prints a special struct containg verious information about IGC Meta tracks in the DB
 func apiTicker(w http.ResponseWriter, r *http.Request) {
-	/*
-		What: returns the JSON struct representing the ticker for the IGC tracks.
-		The first track returned should be the oldest. The array of track ids returned should be capped at 5,
-		to emulate "paging" of the responses. The cap (5) should be a configuration parameter of the
-		application (ie. easy to change by the administrator).
-
-		Response type: application/json
-		Response code: 200 if everything is OK, appropriate error code otherwise.
-		Response
-		{
-		"t_latest": <latest added timestamp>,
-		"t_start": <the first timestamp of the added track>, this will be the oldest track recorded
-		"t_stop": <the last timestamp of the added track>, this might equal to t_latest if there are no more tracks left
-		"tracks": [<id1>, <id2>, ...]
-		"processing": <time in ms of how long it took to process the request>
-		}
-	*/
 	startTime := time.Now()
+
 	w.Header().Add("Content-Type", "application/json")
 	// if DB is empty
 	if MgoTrackDB.count() == 0 {
@@ -123,6 +103,7 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// get the nr of entries to be added til the "apiTicker" and "apiTimestamp" functions special struct
 func getPagingNr() (int, error) {
 	nr := os.Getenv("PAGINGNR")
 
@@ -138,20 +119,8 @@ func getPagingNr() (int, error) {
 	return temp, err
 }
 
+// prints a special struct containg verious information about IGC Meta tracks in the DB
 func apiTimestamp(w http.ResponseWriter, r *http.Request) {
-	/*
-			What: returns the JSON struct representing the ticker for the IGC tracks. The first returned track should have the timestamp HIGHER than the one provided in the query. The array of track IDs returned should be capped at 5, to emulate "paging" of the responses. The cap (5) should be a configuration parameter of the application (ie. easy to change by the administrator).
-		Response type: application/json
-		Response code: 200 if everything is OK, appropriate error code otherwise.
-		Response:
-		{
-		   "t_latest": <latest added timestamp of the entire collection>,
-		   "t_start": <the first timestamp of the added track>, this must be higher than the parameter provided in the query
-		   "t_stop": <the last timestamp of the added track>, this might equal to t_latest if there are no more tracks left
-		   "tracks": [<id1>, <id2>, ...]
-		   "processing": <time in ms of how long it took to process the request>
-		}
-	*/
 
 	startTime := time.Now()
 

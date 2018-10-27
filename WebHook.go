@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// add a new webhook track to the DB
 func webhookNewTrack(w http.ResponseWriter, r *http.Request) {
 
 	var webHook WebHookStruct
@@ -38,21 +39,26 @@ func webhookNewTrack(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "serverside error(MgoWebHookDB.add)", http.StatusInternalServerError)
 		return
 	}
-
+	// print the webhook id
 	fmt.Fprint(w, webHook.ID)
 
 }
 
+// when new ICG tracks are posted  this function is called. it finds
+// witch webhooks should be posted to based on a counter in the whbhook documents, in the DB
 func invokWebHooks(w http.ResponseWriter) {
 
 	processingStartTime := time.Now()
-
+	// count down for all webhooks
 	MgoWebHookDB.counterDown()
+	// get and post to all the webhooks where the counter == 0
 	webHook := postToWebHooks(w, processingStartTime)
+	// reset the counter(back to minTriggerValue) for all webbhocks where counter == 0
 	MgoWebHookDB.counterReset(webHook)
 
 }
 
+//  gets relevant array of webhooks and iterates over them in order to post to each one of them
 func postToWebHooks(w http.ResponseWriter, processingStartTime time.Time) []WebHookStruct {
 
 	var webHook []WebHookStruct
@@ -71,14 +77,8 @@ func postToWebHooks(w http.ResponseWriter, processingStartTime time.Time) []WebH
 	return webHook
 }
 
+// posts message to the URL stored in the webhook struckt
 func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime time.Time) error {
-	/*
-			{
-		   "t_latest": <latest added timestamp of the entire collection>,
-		   "tracks": [<id1>, <id2>, ...]
-		   "processing": <time in ms of how long it took to process the request>
-		}
-	*/
 
 	var ids []ResponsID
 	ids, err := MgoTrackDB.getLatestMetaIDs(webHook.MinTriggerValue)
@@ -91,6 +91,11 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	if !ok {
 		return errors.New("unable to get latest track")
 	}
+
+	//_________________________________________
+
+	// old way of posting before specs where redefied
+
 	temp := InvokeWebHookStruct{
 		TLatest:    latest,
 		Tracks:     ids,
@@ -106,9 +111,34 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 		return err1
 	}
 
+	//_________________________________________
+
+	/*
+
+		Processing := time.Since(processingStartTime).Nanoseconds() / int64(time.Millisecond)
+		strID := ""
+
+		for _, val := range ids {
+			var temp string
+			err := json.Unmarshal([]byte(val.ID), &temp)
+			if err != nil {
+				http.Error(w, "serverside error", http.StatusInternalServerError)
+			}
+			strID += temp + ", "
+		}
+
+		str := fmt.Sprintf("latest: %v, Tracks: %s, processingtime: %v ms", latest, strID, Processing)
+
+		err1 := json.NewEncoder(w).Encode(slackMessage{str})
+		if err1 != nil {
+			return err1
+		}
+
+	*/
 	return nil
 }
 
+// prints a webhook struct as a json string
 func webhookID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -117,13 +147,14 @@ func webhookID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-
+	http.Header.Add(w.Header(), "content-type", "application/json")
 	json.NewEncoder(w).Encode(SimpleWebHookStruct{
 		WebHookURL:      webHook.WebHookURL,
 		MinTriggerValue: webHook.MinTriggerValue,
 	})
 }
 
+// deletes a webhook from the collection based on a id found in the url
 func deleteWebhook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

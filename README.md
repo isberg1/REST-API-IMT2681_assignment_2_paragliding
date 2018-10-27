@@ -11,27 +11,27 @@ From bash terminal use the following commads:
 
 GET /paragliding/
 
-    curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/
+    curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/
 
 GET /api
 
-    curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api
+    curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api
 
 POST /api/track
 
-    curl  --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"url": "http://skypolaris.org/wp-content/uploads/IGS%20Files/Madrid%20to%20Jerez.igc"}' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/track
+    curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"url": "http://skypolaris.org/wp-content/uploads/IGS%20Files/Madrid%20to%20Jerez.igc"}' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/track
 
 GET /api/track
 
-    curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track
+    curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track
 
 GET /api/track/<id>
 
-    curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track/1
+    curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track/1
 
 GET /api/track/<id>/<field>
 
-    curl --write-out "%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track/1/pilot
+    curl --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -X GET https://calm-mesa-59678.herokuapp.com/paragliding/api/track/1/pilot
 
 GET /api/ticker/latest
 
@@ -48,9 +48,8 @@ GET /api/ticker/<timestamp>
 
 POST /api/webhook/new_track/
 
-// TODO make url handler for diplaying webhook content when min_trigger_value is invoced
 
-     curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"web_hook_url": "http://raw.githubusercontent.com/marni/goigc/", "min_trigger_value" : 5 }' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track
+     curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"web_hook_url": " https://calm-mesa-59678.herokuapp.com/test", "min_trigger_value" : 5 }' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track
 
 GET /api/webhook/new_track/<webhook_id>
 
@@ -82,13 +81,19 @@ with auth:
 ### How do I use the program? ###
 
 
-In my go setup i was using go version: go1.11
-I nedded to install "gcc" to run the tests
+for my setup i was using go version: go1.11 on Ubuntu 18.04
+
+in order to use mongoDB i had to install it se link(you may heve to register first)
+
+    https://docs.mongodb.com/manual/tutorial/install-mongodb-enterprise-on-ubuntu/
+
+
+I needed to install "gcc" to run the tests
 
 	sudo apt install gcc
 	cd ~/
-	git clone git@bitbucket.org:isberg/igcinfo.git
-	cd igcinfo/go-getting-started/
+	git clone https://isberg@bitbucket.org/isberg/paragliding.git
+	cd paragliding/
 	go run .
 
 
@@ -112,36 +117,57 @@ Result:
 
 go test:
 
-     go test -v-cover
+      $ go test . -v -cover
+     === RUN   Test_startServer
+     --- PASS: Test_startServer (2.00s)
+     === RUN   Test_httpConnection
+     --- PASS: Test_httpConnection (0.00s)
+     === RUN   Test_rubbishURL_local
+     --- PASS: Test_rubbishURL_local (0.00s)
+     === RUN   Test_igcinfoapi_local
+     --- PASS: Test_igcinfoapi_local (0.00s)
+     === RUN   Test_PostAtInvalidURL
+     --- PASS: Test_PostAtInvalidURL (0.00s)
+     === RUN   Test_PostInvalidContent
+     --- PASS: Test_PostInvalidContent (0.99s)
+     === RUN   Test_PostValidContent
+     --- PASS: Test_PostValidContent (2.78s)
+     === RUN   Test_getAllIDs
+     --- PASS: Test_getAllIDs (0.01s)
+     === RUN   Test_getFields
+     --- PASS: Test_getFields (0.00s)
+     === RUN   Test_apiTtickerLatest
+     --- PASS: Test_apiTtickerLatest (0.00s)
+     === RUN   Test_apiTicker
+     --- PASS: Test_apiTicker (0.02s)
+     === RUN   Test_WebhookNewTrack
+     --- PASS: Test_WebhookNewTrack (0.01s)
+     === RUN   Test_getWebhookByID
+     --- PASS: Test_getWebhookByID (0.00s)
+     === RUN   Test_adminCount
+     --- PASS: Test_adminCount (0.00s)
+     === RUN   Test_adminTrackDropTable
+     --- PASS: Test_adminTrackDropTable (0.00s)
+     === RUN   Test_cleanUp
+     --- PASS: Test_cleanUp (0.02s)
+     PASS
+     coverage: 50.7% of statements
+     ok  	bitbucket.org/isberg/paragliding	(cached)	coverage: 50.7% of statements
 
-Result:
 
-      === RUN   Test_startServer
-      --- PASS: Test_startServer (2.00s)
-      === RUN   Test_httpConnection
-      --- PASS: Test_httpConnection (0.00s)
-      === RUN   Test_rubbishURL_local
-      --- PASS: Test_rubbishURL_local (0.00s)
-      === RUN   Test_igcinfoapi_local
-      --- PASS: Test_igcinfoapi_local (0.00s)
-      === RUN   Test_PostAtInvalidURL
-      --- PASS: Test_PostAtInvalidURL (0.00s)
-      === RUN   Test_PostInvalidContent
-      --- PASS: Test_PostInvalidContent (1.08s)
-      === RUN   Test_PostValidContent
-      --- PASS: Test_PostValidContent (2.39s)
-      === RUN   Test_getAllIDs
-      --- PASS: Test_getAllIDs (0.00s)
-      === RUN   Test_getFields
-      --- PASS: Test_getFields (0.00s)
-      === RUN   Test_apiTtickerLatest
-      --- PASS: Test_apiTtickerLatest (0.00s)
-      === RUN   Test_apiTicker
-      --- PASS: Test_apiTicker (0.01s)
-      === RUN   Test_WebhookNewTrack
-      --- PASS: Test_WebhookNewTrack (0.00s)
-      === RUN   Test_cleanUp
-      --- PASS: Test_cleanUp (0.02s)
-      PASS
-      coverage: 49.9% of statements
-      ok  	bitbucket.org/isberg/paragliding	(cached)	coverage: 49.9% of statements
+choices and decisions
+
+i choose the  globalsign/mgo driver because i found better documentation
+
+
+in order to check what webhocks should be posted to, i made a counter in the webhook document
+i works like this:
+* for every new IGC track post, all webhook counters are decremented by 1
+* for all webhook document where counter == 0, post to them
+* for all webhook document where counter == 0, reset counter to counter = min_trigger_value
+
+i was unsure if we where to implement authentication for the admin endpoints so i found a library that
+allows for simple authentication.
+
+my clocktrigger app is running in a tmux session in openstack. it checks a config file to se the timestamp
+check interval. the check interval can be altered at runtime by editing the config file. the app posts to slack

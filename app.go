@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/abbot/go-http-auth"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/abbot/go-http-auth"
 
 	"github.com/gorilla/mux"
 )
@@ -40,6 +41,8 @@ func main() {
 	// local DB
 	MgoTrackDB.initTrackCollection("test", "mainCollection", "mongodb://127.0.0.1:27017")
 	MgoWebHookDB.initWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
+	// remote DB
+	// secret
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
@@ -77,7 +80,7 @@ func main() {
 	//DELETE /admin/api/tracks
 	r.HandleFunc("/admin/api/{track:tracks[/]?}", authenticator.Wrap(trackDropTable)).Methods("DELETE")
 	// for testing of webhook posts
-	r.HandleFunc("/test", printRespons).Methods("POST")
+	r.HandleFunc("/test", printRespons)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -95,15 +98,21 @@ func all(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
+// redirects to /paragliding/api
 func rederect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/paragliding/api", http.StatusPermanentRedirect)
 }
 
-// exists for testing purposes
+// exists for testing of invoking webhook posts
 func printRespons(w http.ResponseWriter, r *http.Request) {
-	a, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("printRespons", err)
+
+	if r.Method == http.MethodPost {
+		a, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			fmt.Println("printRespons", err)
+		} else {
+			fmt.Print(string(a))
+		}
 	}
-	fmt.Print(string(a))
+
 }

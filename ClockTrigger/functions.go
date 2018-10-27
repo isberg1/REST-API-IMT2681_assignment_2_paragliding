@@ -11,13 +11,15 @@ import (
 	"strings"
 )
 
+// SlackMessage struct that is comparable with Slack webhooks
 type SlackMessage struct {
 	Text string `json:"text"`
 }
 
+// reads the time between checks from file
 func readFromFile() int {
 	//open file
-	file, err := os.Open(FilePath)
+	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println("unable to open config file", file)
 		panic(err)
@@ -43,23 +45,19 @@ func readFromFile() int {
 	return checkInterval
 }
 
-func postToSlack(str string) error {
+// posts messages to a Slack webhook
+func postToSlack(str string) {
 
 	message, err := json.Marshal(SlackMessage{Text: str})
 	if err != nil {
-		return err
+		fmt.Println(err, "1")
+		return
 	}
 
-	res, err1 := http.Post(SlackURL, "application/json", bytes.NewBuffer(message))
+	_, err1 := http.Post(slackURL, "application/json", bytes.NewBuffer(message))
 	if err1 != nil {
-		return err1
+		fmt.Println(err1, "2")
+		return
 	}
 
-	var text string
-	json.NewDecoder(res.Body).Decode(&text)
-
-	fmt.Println(string(message))
-	fmt.Println(text)
-
-	return nil
 }

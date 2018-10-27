@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/abbot/go-http-auth"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
+
+	"github.com/abbot/go-http-auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // returns the size of the IGC Meta tracks database collection
@@ -36,9 +37,13 @@ func trackDropTable(w http.ResponseWriter, r *auth.AuthenticatedRequest /*r *htt
 // check to see if username and password is correct
 func secret(user, realm string) string {
 	if user == "overlord" {
-		//todo chang befor uploding
+
 		// alternatively password could be read from (encrypted)file
-		password := os.Getenv("ADMINPASSWORD") // "pass"
+		password := os.Getenv("ADMINPASSWORD")
+		if password == "" {
+			password = "pass"
+		}
+
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err == nil {
 			return string(hashedPassword)

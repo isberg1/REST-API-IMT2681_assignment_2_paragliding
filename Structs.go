@@ -77,8 +77,8 @@ type mongoDbStruct struct {
 }
 
 /*
-//Slack webhook message
-type SlackMessage struct {
+//Slack webhook compadable message
+type slackMessage struct {
 	Text string `json:"text"`
 }
 */

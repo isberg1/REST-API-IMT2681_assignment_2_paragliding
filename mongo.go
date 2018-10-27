@@ -7,6 +7,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// set up the track collection to have a unique key "id"
 func (db *mongoDbStruct) initTrackCollection(dbName, collec, host string) {
 	db.DatabaseName = dbName //
 	db.Host = host           //"mongodb://127.0.0.1:27017"
@@ -32,6 +33,7 @@ func (db *mongoDbStruct) initTrackCollection(dbName, collec, host string) {
 	}
 }
 
+// set up the webhook collection to have a unique key "id"
 func (db *mongoDbStruct) initWebHookCollection(dbName, collec, host string) {
 	db.DatabaseName = dbName //
 	db.Host = host           //"mongodb://127.0.0.1:27017"
@@ -57,6 +59,7 @@ func (db *mongoDbStruct) initWebHookCollection(dbName, collec, host string) {
 	}
 }
 
+// returns the collection count
 func (db *mongoDbStruct) count() int {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -72,6 +75,7 @@ func (db *mongoDbStruct) count() int {
 	return count
 }
 
+// adds a document to the database
 func (db *mongoDbStruct) add(s interface{}) error {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -87,6 +91,7 @@ func (db *mongoDbStruct) add(s interface{}) error {
 	return nil
 }
 
+// gets a IGC META document, converts and returns it to a struct
 func (db *mongoDbStruct) getMetaByID(keyID string) (Meta, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -104,6 +109,7 @@ func (db *mongoDbStruct) getMetaByID(keyID string) (Meta, bool) {
 	return igcMeta, allWasGood
 }
 
+// delete a document based on the unique key "id"
 func (db *mongoDbStruct) delete(keyID string) bool {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -120,6 +126,7 @@ func (db *mongoDbStruct) delete(keyID string) bool {
 	return true
 }
 
+// drops a collection from the DB
 func (db *mongoDbStruct) dropCollection() bool {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -149,6 +156,7 @@ func (db *mongoDbStruct) dropCollection() bool {
 	return true
 }
 
+// gets all keys "id" from a collection, and returns an string array of ids
 func (db *mongoDbStruct) getAllKeys() ([]string, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -168,6 +176,7 @@ func (db *mongoDbStruct) getAllKeys() ([]string, bool) {
 	return ids, ok
 }
 
+// get the timestamp of the latest posted IGC meta track to be posted
 func (db *mongoDbStruct) getLatestMetaTimestamp() (int64, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -187,6 +196,7 @@ func (db *mongoDbStruct) getLatestMetaTimestamp() (int64, bool) {
 	return timestamp.TimeStamp, ok
 }
 
+// get the timestamp of the oldest posted IGC meta track to be posted
 func (db *mongoDbStruct) getOldestMetaByTimeStamp() (int64, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -206,6 +216,7 @@ func (db *mongoDbStruct) getOldestMetaByTimeStamp() (int64, bool) {
 	return timestamp.TimeStamp, ok
 }
 
+// gets and returns a IGC MEATA struct based on a timestamp
 func (db *mongoDbStruct) getMetaByTimstamp(timeStamp int64) (Meta, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -224,6 +235,8 @@ func (db *mongoDbStruct) getMetaByTimstamp(timeStamp int64) (Meta, bool) {
 
 	return igcFile, ok
 }
+
+// gets and returns a webhook struct struct based on a timestamp
 func (db *mongoDbStruct) getWebHookByTimstamp(timeStamp int64) (WebHookStruct, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -292,7 +305,7 @@ func (db *mongoDbStruct) getPostArray() ([]WebHookStruct, error) {
 	return webHook, err1
 }
 
-// get the latest x nr of document entries
+// get the latest "lastNr" nr of IGC document entries
 func (db *mongoDbStruct) getLatestMetaIDs(lastNr int) ([]ResponsID, error) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -309,6 +322,7 @@ func (db *mongoDbStruct) getLatestMetaIDs(lastNr int) ([]ResponsID, error) {
 	return ids, err1
 }
 
+// resets all webhook counters to their default( MinTriggerValue) value
 func (db *mongoDbStruct) counterReset(webHookArray []WebHookStruct) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -324,6 +338,8 @@ func (db *mongoDbStruct) counterReset(webHookArray []WebHookStruct) {
 		}
 	}
 }
+
+// gets and returns a webhook document as a struct
 func (db *mongoDbStruct) getWebHookByID(keyID string) (WebHookStruct, bool) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -341,6 +357,7 @@ func (db *mongoDbStruct) getWebHookByID(keyID string) (WebHookStruct, bool) {
 	return webHook, allWasGood
 }
 
+// delete a webhook document based on a "id"
 func (db *mongoDbStruct) deleteWebHook(keyID string) (WebHookStruct, error) {
 	session, err := mgo.Dial(db.Host)
 	if err != nil {
@@ -360,6 +377,7 @@ func (db *mongoDbStruct) deleteWebHook(keyID string) (WebHookStruct, error) {
 	return webHook, nil
 }
 
+// deletes a collection form the DB
 func (db *mongoDbStruct) dropTable() error {
 	if db.count() == 0 {
 		return nil

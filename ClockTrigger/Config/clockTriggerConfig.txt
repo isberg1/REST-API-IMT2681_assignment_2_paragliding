@@ -1,1 +1,1 @@
-checkInterval = 1
+checkInterval = 10

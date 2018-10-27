@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -337,6 +338,8 @@ func Test_getFields(t *testing.T) {
 	}
 }
 
+// tests the "http://localhost:8080/paragliding/api/ticker/latest" handler and
+// checks the respons
 func Test_apiTtickerLatest(t *testing.T) {
 
 	expectedContentType := "text/plain"
@@ -370,6 +373,8 @@ func Test_apiTtickerLatest(t *testing.T) {
 	}
 }
 
+// tests the "http://localhost:8080/paragliding/api/ticker" handler and
+// checks the respons
 func Test_apiTicker(t *testing.T) {
 
 	expectedContentType := "application/json"
@@ -414,6 +419,8 @@ func Test_apiTicker(t *testing.T) {
 	}
 }
 
+// tests the "http://localhost:8080/paragliding/api/webhook/new_track" handler and
+// checks the respons
 func Test_WebhookNewTrack(t *testing.T) {
 
 	expectedStatusCode := 200
@@ -449,6 +456,59 @@ func Test_WebhookNewTrack(t *testing.T) {
 
 }
 
+// /paragliding/api/webhook/new_track/{webhookID}{slash:[/]?}", webhookID
+func Test_getWebhookByID(t *testing.T) {
+	expectedContentType := "application/json"
+	expectedStatusCode := 200
+
+	get, err := http.Get(localProjectURLroot + "paragliding/api/webhook/new_track/1")
+	if err != nil {
+		t.Error("error getting from URL", err)
+	}
+	defer get.Body.Close()
+	if get.StatusCode != expectedStatusCode {
+		fmt.Println(get.StatusCode)
+		t.Error("error invalid status code")
+	}
+	if get.Header.Get("Content-Type") != expectedContentType {
+		t.Error("error invalid Content-Type ", get.Header.Get("Content-Type"))
+	}
+}
+
+// tests the handeler authenticator.Wrap(adminTracksCount)/admin/api/{track:tracks_count[/]?}
+func Test_adminCount(t *testing.T) {
+	expectedStatusCode := http.StatusUnauthorized
+
+	get, err := http.Get(localProjectURLroot + "admin/api/tracks_count")
+	if err != nil {
+		t.Error("error getting from URL", err)
+	}
+	defer get.Body.Close()
+	if get.StatusCode != expectedStatusCode {
+		fmt.Println(get.StatusCode)
+		t.Error("error invalid status code", get.StatusCode)
+	}
+
+}
+
+// tests the handeler authenticator.authenticator.Wrap(trackDropTable) /admin/api/tracks
+func Test_adminTrackDropTable(t *testing.T) {
+	expectedStatusCode := http.StatusMethodNotAllowed
+
+	var dummy io.Reader
+	get, err := http.Post(localProjectURLroot+"admin/api/tracks", "", dummy)
+	if err != nil {
+		t.Error("error getting from URL", err)
+	}
+	defer get.Body.Close()
+	if get.StatusCode != expectedStatusCode {
+		fmt.Println(get.StatusCode)
+		t.Error("error invalid status code", get.StatusCode)
+	}
+
+}
+
+// drops the collection
 func Test_cleanUp(t *testing.T) {
 	err := MgoTrackDB.dropTable()
 	if err != nil {
