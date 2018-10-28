@@ -111,30 +111,6 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 		return err1
 	}
 
-	//_________________________________________
-
-	/*
-
-		Processing := time.Since(processingStartTime).Nanoseconds() / int64(time.Millisecond)
-		strID := ""
-
-		for _, val := range ids {
-			var temp string
-			err := json.Unmarshal([]byte(val.ID), &temp)
-			if err != nil {
-				http.Error(w, "serverside error", http.StatusInternalServerError)
-			}
-			strID += temp + ", "
-		}
-
-		str := fmt.Sprintf("latest: %v, Tracks: %s, processingtime: %v ms", latest, strID, Processing)
-
-		err1 := json.NewEncoder(w).Encode(slackMessage{str})
-		if err1 != nil {
-			return err1
-		}
-
-	*/
 	return nil
 }
 

@@ -83,7 +83,7 @@ with auth:
 
 for my setup i was using go version: go1.11 on Ubuntu 18.04
 
-in order to use mongoDB i had to install it se link(you may heve to register first)
+in order to use mongoDB i had to install it first se link(you may have to register first)
 
     https://docs.mongodb.com/manual/tutorial/install-mongodb-enterprise-on-ubuntu/
 
@@ -166,8 +166,8 @@ i works like this:
 * for all webhook document where counter == 0, post to them
 * for all webhook document where counter == 0, reset counter to counter = min_trigger_value
 
-i was unsure if we where to implement authentication for the admin endpoints so i found a library that
-allows for simple authentication.
+i was unsure if we where to implement authentication for the admin endpoints, but decided to try, so i
+found a library that allows for simple authentication.
 
 my clocktrigger app is running in a tmux session in openstack. it checks a config file to se the timestamp
 check interval. the check interval can be altered at runtime by editing the config file. the app posts to slack

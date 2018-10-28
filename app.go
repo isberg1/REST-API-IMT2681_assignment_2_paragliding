@@ -43,6 +43,8 @@ func main() {
 	MgoWebHookDB.initWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
 	// remote DB
 	// secret
+	//MgoTrackDB.initTrackCollection("paragliding", "tracks", "mongodb://app.go:mlabpass123@ds233323.mlab.com:33323/paragliding")
+	//MgoWebHookDB.initWebHookCollection("paragliding", "WebHook", "mongodb://app.go:mlabpass123@ds233323.mlab.com:33323/paragliding")
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
