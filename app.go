@@ -105,6 +105,9 @@ func rederect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/paragliding/api", http.StatusPermanentRedirect)
 }
 
+// stores webhook posts
+var webhookStrings []string
+
 // exists for testing of invoking webhook posts
 func printRespons(w http.ResponseWriter, r *http.Request) {
 
@@ -113,7 +116,13 @@ func printRespons(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println("printRespons", err)
 		} else {
-			fmt.Print(string(a))
+			webhookStrings = append(webhookStrings, string(a))
+		}
+	} else if r.Method == http.MethodGet {
+		for _, val := range webhookStrings {
+			// print webookposts
+			fmt.Fprintln(w, val)
+			fmt.Println(val)
 		}
 	}
 

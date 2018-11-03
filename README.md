@@ -49,7 +49,7 @@ GET /api/ticker/<timestamp>
 POST /api/webhook/new_track/
 
 
-     curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"web_hook_url": " https://calm-mesa-59678.herokuapp.com/test", "min_trigger_value" : 5 }' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track
+     curl  --write-out "\n%{http_code} %{content_type}\n" -H "Content-Type: application/json" -d '{"web_hook_url": " https://calm-mesa-59678.herokuapp.com/test", "min_trigger_value" : 2 }' -X POST https://calm-mesa-59678.herokuapp.com/paragliding/api/webhook/new_track
 
 GET /api/webhook/new_track/<webhook_id>
 
@@ -155,7 +155,7 @@ go test:
      ok  	bitbucket.org/isberg/paragliding	(cached)	coverage: 50.7% of statements
 
 
-choices and decisions
+# choices and decisions
 
 i choose the  globalsign/mgo driver because i found better documentation
 
@@ -172,3 +172,12 @@ found a library that allows for simple authentication.
 
 my clocktrigger app is running in a tmux session in openstack. it checks a config file to se the timestamp
 check interval. the check interval can be altered at runtime by editing the config file. the app posts to slack
+
+
+in order to test webhook funtionality set URL subscription address to be https://calm-mesa-59678.herokuapp.com/test
+
+post as many new igc track as your minimal_trigger_value
+
+open website https://calm-mesa-59678.herokuapp.com/test to se webhook post
+
+the file with the main function is called app.go

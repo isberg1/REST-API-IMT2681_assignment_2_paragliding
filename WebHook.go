@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -71,7 +72,7 @@ func postToWebHooks(w http.ResponseWriter, processingStartTime time.Time) []WebH
 	for _, val := range webHook {
 		err1 := postTo(val, w, processingStartTime)
 		if err1 != nil {
-			fmt.Println("unable to post to ", err1)
+			fmt.Println("unable to post to ", val, err1)
 		}
 	}
 	return webHook
@@ -104,10 +105,14 @@ func postTo(webHook WebHookStruct, w http.ResponseWriter, processingStartTime ti
 	a, err2 := json.Marshal(&temp)
 	if err2 != nil {
 		http.Error(w, "serverside error(json.Marshal(&temp))", http.StatusInternalServerError)
-	} //fmt.Println(temp)
+	}
+	// had som weird problems when i wasn't ensuring content was a string
+	str := fmt.Sprint(webHook.WebHookURL)
+	str = strings.TrimSpace(str)
 
-	_, err1 := http.Post(webHook.WebHookURL, "application/json", bytes.NewBuffer(a))
+	_, err1 := http.Post(str, "application/json", bytes.NewBuffer(a))
 	if err1 != nil {
+		//fmt.Printf("%v %T", str, str)
 		return err1
 	}
 
