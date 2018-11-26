@@ -31,7 +31,12 @@ func (db *mongoDbStruct) initTrackCollection(dbName, collec, host string) {
 	if err2 != nil {
 		panic(err2)
 	}
+
+
 }
+
+
+
 
 // set up the webhook collection to have a unique key "id"
 func (db *mongoDbStruct) initWebHookCollection(dbName, collec, host string) {
