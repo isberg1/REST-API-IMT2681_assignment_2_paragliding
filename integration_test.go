@@ -39,7 +39,6 @@ func Test_startServer(t *testing.T) {
 	if err1 != nil {
 		t.Error("unable to drop collection", err)
 	}
-
 }
 
 // wait for server to be established
@@ -84,45 +83,6 @@ func Test_rubbishURL_local(t *testing.T) {
 	}
 }
 
-// Test_igcinfoapi_local check if the responding json is as expected
-func Test_igcinfoapi_local(t *testing.T) {
-	expectedSatusCode := http.StatusOK
-	expectedVersion := unavalabeVersinNr
-	expectedInfo := infoSting
-	notExpectedUptime1 := ""
-	notExpectedUptime2 := "PT"
-
-	get, err := http.Get(localProjectURLinfo1)
-	if err != nil {
-		t.Error("error getting from URL", err)
-	}
-	defer get.Body.Close()
-
-	res, err2 := ioutil.ReadAll(get.Body)
-	if err2 != nil {
-		t.Error("error reading body", err2)
-	}
-	var appInfo GetIgcinfoAPI
-
-	// check if values are correct
-	err3 := json.Unmarshal(res, &appInfo)
-	if err3 != nil {
-		t.Error("error umarshaling ", err3)
-	}
-	if get.StatusCode != expectedSatusCode {
-		t.Error("error invalid http status code")
-	}
-	if appInfo.Version != expectedVersion {
-		t.Error("error invalid version nr ")
-	}
-	if appInfo.Info != expectedInfo {
-		t.Error("error invalid information string ")
-	}
-	if appInfo.Uptime == notExpectedUptime1 || appInfo.Uptime == notExpectedUptime2 {
-		t.Error("error invalid uptime value ")
-	}
-}
-
 // tries to post at an invalid URL
 func Test_PostAtInvalidURL(t *testing.T) {
 	expected := make([]int, 0)
@@ -161,18 +121,18 @@ func Test_PostAtInvalidURL(t *testing.T) {
 }
 
 // tries to post invalid content to correct URL
-func Test_PostInvalidContent(t *testing.T) {
+func Test_PostInvalidContent1(t *testing.T) {
 	expected := http.StatusBadRequest
 
-	invalidIgcURL := make([]string, 0)
-	invalidIgcURL = append(
-		invalidIgcURL,
+	invalidIgcFile := make([]string, 0)
+	invalidIgcFile = append(
+		invalidIgcFile,
 		"https://github.com/",
 		"https://raw.githubusercontent.com/marni/goigc/master/testdata/parse-0-invalid-record.0.igc",
 		"https://raw.githubusercontent.com/marni/goigc/master/testdata/parse-c-invalid-finish.0.igc",
 	)
-	// iterate over slice with URL's
-	for _, res := range invalidIgcURL {
+	// iterate over slice with IGC file's
+	for _, res := range invalidIgcFile {
 		jsonVar, err := json.Marshal(InputURL{URL: res})
 		if err != nil {
 			t.Error("error marshaling into json")
@@ -232,7 +192,7 @@ func Test_PostValidContent(t *testing.T) {
 			}
 		}
 	}
-	// check that nr of entries in IgcMap is correct
+	// check that number of entries in IgcMap is correct
 	if MgoTrackDB.count() != (len(postURL) + len(igcULR)) {
 		t.Error("error data structure does not contain expected nr of values: ", MgoTrackDB.count())
 	}
@@ -287,6 +247,35 @@ func Test_getAllIDs(t *testing.T) {
 	}
 }
 
+func Test_returnID(t *testing.T) {
+	expected := http.StatusOK
+
+	if MgoTrackDB.count() < 1 {
+		t.Error("error no tracks in DB")
+	}
+
+	get, err := http.Get(localProjectURLarray1 + "/" + fmt.Sprintf("%v", 1))
+	if err != nil {
+		t.Error("error getting content from URL", localProjectURLarray1+"/"+fmt.Sprintf("%v", 1))
+	}
+	defer get.Body.Close()
+	if get.StatusCode != expected {
+		t.Error("error incorrect status code", get.StatusCode)
+	}
+
+	simpleMetaStruct := SimpleMeta{}
+
+	err2 := json.NewDecoder(get.Body).Decode(&simpleMetaStruct)
+	if err2 != nil {
+		t.Error("error reading body", err2)
+	}
+
+	_, err3 := http.Get(simpleMetaStruct.URL)
+	if err3 != nil {
+		t.Error("error unable to get content form URL")
+	}
+}
+
 // tries to get single fields form URL's
 func Test_getFields(t *testing.T) {
 	expected := http.StatusOK
@@ -301,45 +290,45 @@ func Test_getFields(t *testing.T) {
 		"track_length",
 	)
 
-	for key := 1; key == MgoTrackDB.count(); key++ {
-		for _, field := range metaKey {
+	if MgoTrackDB.count() < 1 {
+		t.Error("error no entries in DB")
+	}
 
-			strKey := strconv.Itoa(key)
+	for _, field := range metaKey {
 
-			myURL := localProjectURLarray1 + strKey + "/" + field
+		strKey := strconv.Itoa(1)
 
-			get, err := http.Get(myURL)
-			if err != nil {
-				t.Error("error getting from URL", err)
-			}
-			defer get.Body.Close()
-			if get.StatusCode != expected {
-				fmt.Println(get.StatusCode)
-				t.Error("error invalid status code from", myURL)
-			}
-			res, err2 := ioutil.ReadAll(get.Body)
-			if err2 != nil {
-				t.Error("error reading body", err2)
-			}
-			str := string(res)
-			if str == "" {
-				t.Error("error illegal content has been successfully posted")
-			}
-			// if the field is "track_length"
-			if field == metaKey[4] {
-				// try to convert the field "track_length" into int
-				str = strings.TrimSpace(str)
-				_, err3 := strconv.Atoi(str)
-				if err3 != nil {
-					t.Error("error illegal value(not int) for", err3, field, str)
-				}
+		myURL := localProjectURLarray1 + strKey + "/" + field
+		get, err := http.Get(myURL)
+		if err != nil {
+			t.Error("error getting from URL", err)
+		}
+		defer get.Body.Close()
+		if get.StatusCode != expected {
+			t.Error("error invalid status code from", myURL)
+		}
+		res, err2 := ioutil.ReadAll(get.Body)
+		if err2 != nil {
+			t.Error("error reading body", err2)
+		}
+		str := string(res)
+		if str == "" {
+			t.Error("error illegal content has been successfully posted")
+		}
+		// if the field is "track_length"
+		if field == metaKey[4] {
+			// try to convert the field "track_length" into int
+			str = strings.TrimSpace(str)
+			_, err3 := strconv.Atoi(str)
+			if err3 != nil {
+				t.Error("error illegal value(not int) for", err3, field, str)
 			}
 		}
 	}
 }
 
 // tests the "http://localhost:8080/paragliding/api/ticker/latest" handler and
-// checks the respons
+// checks the response
 func Test_apiTtickerLatest(t *testing.T) {
 
 	expectedContentType := "text/plain"
@@ -419,6 +408,63 @@ func Test_apiTicker(t *testing.T) {
 	}
 }
 
+func Test_apiTimestamp(t *testing.T) {
+
+	expectedContentType := "application/json"
+	expectedStatusCode := 200
+
+	time, ok := MgoTrackDB.getOldestMetaByTimeStamp()
+	if !ok {
+		fmt.Println(time)
+		fmt.Println(fmt.Sprintf("%v", time))
+
+		t.Error("error no entries in DB")
+	}
+
+	get, err := http.Get(localProjectURLroot + "paragliding/api/ticker/" + fmt.Sprintf("%v", time))
+	if err != nil {
+		t.Error("error getting from URL", err)
+	}
+	defer get.Body.Close()
+	// check if response status code is correct
+	if get.StatusCode != expectedStatusCode {
+		fmt.Println(get.StatusCode)
+		t.Error(
+			"incorrect status code received, expected: " +
+				string(expectedStatusCode) +
+				" got: " +
+				string(get.StatusCode))
+	}
+	// check if response has correct header type
+	if get.Header.Get("Content-Type") != expectedContentType {
+		t.Error("error invalid Content-Type ", get.Header.Get("Content-Type"))
+	}
+	res, err2 := ioutil.ReadAll(get.Body)
+	if err2 != nil {
+		t.Error("error reading body", err2)
+	}
+	// check if response is in correct format
+	var ticker Ticker
+	err3 := json.Unmarshal(res, &ticker)
+	if err3 != nil {
+		t.Error("error unable to unmarshal json array", err3)
+	}
+
+	latestTime, ok := MgoTrackDB.getLatestMetaTimestamp()
+	if !ok {
+		t.Error("error unable to get latest timestamp")
+	}
+	// check if received value is correct
+	if latestTime != ticker.TLatest {
+		t.Error(
+			"error wrong timestamp received, expected: " +
+				fmt.Sprintf("%v", latestTime) +
+				" got " +
+				fmt.Sprintf("%v", ticker.TLatest))
+	}
+
+}
+
 // tests the "http://localhost:8080/paragliding/api/webhook/new_track" handler and
 // checks the respons
 func Test_WebhookNewTrack(t *testing.T) {
@@ -434,24 +480,28 @@ func Test_WebhookNewTrack(t *testing.T) {
 		t.Error("error marshaling into json")
 	} // for all  URL to send POST content to
 
-	// try posing
-	post, err2 := http.Post(postURL, contentType, bytes.NewBuffer(jsonString))
-	if err2 != nil {
-		t.Error("error unable to POST from: ", postURL)
-	}
-	defer post.Body.Close()
-	if post.StatusCode != expectedStatusCode {
-		t.Error("error legal post not permitted for: ", postURL)
-	}
+	for i := 0; i < 2; i++ {
 
-	id, err3 := ioutil.ReadAll(post.Body)
-	if err3 != nil {
-		t.Error("error unable to read Post.Body : ", err3)
-	}
+		// try posing
+		post, err2 := http.Post(postURL, contentType, bytes.NewBuffer(jsonString))
+		if err2 != nil {
+			t.Error("error unable to POST from: ", postURL)
+		}
+		defer post.Body.Close()
+		if post.StatusCode != expectedStatusCode {
+			t.Error("error legal post not permitted for: ", postURL)
+		}
 
-	responce, ok := MgoWebHookDB.getWebHookByID(string(id))
-	if !ok {
-		t.Error("error unable was unsuccessful at posting to webHook Subscription", responce, "--", string(id))
+		id, err3 := ioutil.ReadAll(post.Body)
+		if err3 != nil {
+			t.Error("error unable to read Post.Body : ", err3)
+		}
+
+		responce, ok := MgoWebHookDB.getWebHookByID(string(id))
+		if !ok {
+			t.Error("error was unsuccessful at posting to webHook Subscription", responce, "--", string(id))
+		}
+
 	}
 
 }
@@ -475,7 +525,7 @@ func Test_getWebhookByID(t *testing.T) {
 	}
 }
 
-// tests the handeler authenticator.Wrap(adminTracksCount)/admin/api/{track:tracks_count[/]?}
+// tests the handler authenticator.Wrap(adminTracksCount)/admin/api/{track:tracks_count[/]?}
 func Test_adminCount(t *testing.T) {
 	expectedStatusCode := http.StatusUnauthorized
 
@@ -504,6 +554,72 @@ func Test_adminTrackDropTable(t *testing.T) {
 	if get.StatusCode != expectedStatusCode {
 		fmt.Println(get.StatusCode)
 		t.Error("error invalid status code", get.StatusCode)
+	}
+
+}
+
+func Test_adminTracksCount(t *testing.T) {
+
+	username := "overlord"
+	passwd := "pass"
+	myURL := localProjectURLroot + "admin/api/tracks_count"
+	// set up http test
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", myURL, nil)
+	if err != nil {
+		t.Error("error unable to make new http request")
+	}
+	req.SetBasicAuth(username, passwd)
+	resp, err2 := client.Do(req)
+	if err2 != nil {
+		t.Error("error unable to run client.Doo")
+	}
+	bodyText, err2 := ioutil.ReadAll(resp.Body)
+	if err2 != nil {
+		t.Error("error unable to read response body")
+	}
+	str := string(bodyText)
+
+	if str == "" {
+		t.Error("error no content in response body")
+	}
+
+	_, err3 := strconv.Atoi(str)
+	if err3 != nil {
+		t.Error("error response not an int", str)
+	}
+}
+
+func Test_trackDropTable(t *testing.T) {
+
+	username := "overlord"
+	passwd := "pass"
+	myURL := localProjectURLroot + "admin/api/tracks"
+
+	// set up http test
+
+	client := &http.Client{}
+	req, err := http.NewRequest("DELETE", myURL, nil)
+	if err != nil {
+		t.Error("error unable to make new http request")
+	}
+	req.SetBasicAuth(username, passwd)
+	resp, err2 := client.Do(req)
+	if err2 != nil {
+		t.Error("error unable to run client.Doo")
+	}
+	bodyNumber, err2 := ioutil.ReadAll(resp.Body)
+	if err2 != nil {
+		t.Error("error unable to read response body")
+	}
+	nr, err3 := strconv.Atoi(string(bodyNumber))
+	if err3 != nil {
+		t.Error("error received item not a nr ", nr)
+	}
+
+	if MgoTrackDB.count() != 0 {
+		t.Error("error DB tracks not dropped")
 	}
 
 }

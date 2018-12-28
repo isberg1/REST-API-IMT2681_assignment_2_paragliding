@@ -33,16 +33,7 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	// if DB is empty
 	if MgoTrackDB.count() == 0 {
-		/* alternative sulution:
-		ticker := Ticker{
-			TLatest: -1,
-			TStart:-1,
-			TStorp:-1,
-			Tracks:[]ResponsID{},
-			Processing:time.Since(startTime).Nanoseconds() / int64(time.Millisecond),
-		}
-		json.NewEncoder(w).Encode(ticker)
-		*/
+
 		http.Error(w, "", http.StatusNoContent)
 		return
 	}
@@ -80,7 +71,7 @@ func apiTicker(w http.ResponseWriter, r *http.Request) {
 	for i := 1; i < nr; i++ {
 		temp, err1 := MgoTrackDB.getMetaBiggerThen(nextTimeStamp)
 		if err1 != nil {
-			http.Error(w, "serverside error(getMetaBiggerThen)", http.StatusInternalServerError)
+			http.Error(w, "server side error(getMetaBiggerThen)", http.StatusInternalServerError)
 			return
 		}
 		idArray = append(idArray, ResponsID{ID: temp.ID})
@@ -125,16 +116,7 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	if MgoTrackDB.count() == 0 || MgoTrackDB.count() == 1 {
-		/* alternative sulution:
-		ticker := Ticker{
-			TLatest: -1,
-			TStart:-1,
-			TStorp:-1,
-			Tracks:[]ResponsID{},
-			Processing:time.Since(startTime).Nanoseconds() / int64(time.Millisecond),
-		}
-		json.NewEncoder(w).Encode(ticker)
-		*/
+
 		http.Error(w, "", http.StatusNoContent)
 		return
 	}
@@ -160,7 +142,7 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "serverside error", http.StatusInternalServerError)
 	}
-	// if there is less document entries in the database then spesified from  getPagingNr(), then adjust "nr"
+	// if there is less document entries in the database then specified from  getPagingNr(), then adjust "nr"
 	if MgoTrackDB.count() < nr {
 		nr = MgoTrackDB.count()
 	}
@@ -169,7 +151,7 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 
 	firsID, err1 := MgoTrackDB.getMetaBiggerThen(nextTimeStamp)
 	if err1 != nil {
-		http.Error(w, "serverside error(getMetaBiggerThen)", http.StatusNoContent)
+		http.Error(w, "server side error(getMetaBiggerThen)", http.StatusNoContent)
 		return
 	}
 	idArray = append(idArray, ResponsID{firsID.ID})
@@ -184,14 +166,14 @@ func apiTimestamp(w http.ResponseWriter, r *http.Request) {
 		nextTimeStamp = temp.TimeStamp
 	}
 
-	latestimeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
+	latesTimeStamp, ok := MgoTrackDB.getLatestMetaTimestamp()
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
 
 	ticker := Ticker{
-		TLatest:    latestimeStamp,
+		TLatest:    latesTimeStamp,
 		TStart:     firsID.TimeStamp,
 		TStorp:     nextTimeStamp,
 		Tracks:     idArray,

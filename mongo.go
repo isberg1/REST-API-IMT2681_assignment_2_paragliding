@@ -32,11 +32,7 @@ func (db *mongoDbStruct) initTrackCollection(dbName, collec, host string) {
 		panic(err2)
 	}
 
-
 }
-
-
-
 
 // set up the webhook collection to have a unique key "id"
 func (db *mongoDbStruct) initWebHookCollection(dbName, collec, host string) {
@@ -234,7 +230,7 @@ func (db *mongoDbStruct) getMetaByTimstamp(timeStamp int64) (Meta, bool) {
 
 	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": timeStamp}).One(&igcFile)
 	if err1 != nil {
-		fmt.Println("error(getOldestMetaByTimeStamp) retriving from DB", err1)
+		fmt.Println("error(getMetaByTimstamp) retriving from DB", err1)
 		ok = false
 	}
 
@@ -254,7 +250,7 @@ func (db *mongoDbStruct) getWebHookByTimstamp(timeStamp int64) (WebHookStruct, b
 
 	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": timeStamp}).One(&wHook)
 	if err1 != nil {
-		fmt.Println("error(getOldestMetaByTimeStamp) retriving from DB", err1)
+		fmt.Println("error(getWebHookByTimstamp) retriving from DB", err1)
 		ok = false
 	}
 
@@ -273,7 +269,7 @@ func (db *mongoDbStruct) getMetaBiggerThen(timeStamp int64) (Meta, error) {
 
 	err1 := session.DB(db.DatabaseName).C(db.collection).Find(bson.M{"timestamp": bson.M{"$gt": timeStamp}}).Sort("timestamp").Limit(1).One(&igcFile) //
 	if err1 != nil {
-		fmt.Println("error(getMetaBiggerThen) retriving from DB", err1, igcFile)
+		return igcFile, err1
 	}
 
 	return igcFile, err1

@@ -42,7 +42,6 @@ func main() {
 	MgoTrackDB.initTrackCollection("test", "mainCollection", "mongodb://127.0.0.1:27017")
 	MgoWebHookDB.initWebHookCollection("test", "WebHook", "mongodb://127.0.0.1:27017")
 
-
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
 	r.HandleFunc("/", all)
@@ -97,7 +96,7 @@ func all(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-// redirects to /paragliding/api
+// redirects "/paragliding" to "/paragliding/api"
 func rederect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/paragliding/api", http.StatusPermanentRedirect)
 }
@@ -122,5 +121,4 @@ func printRespons(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(val)
 		}
 	}
-
 }
