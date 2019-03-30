@@ -1,9 +1,15 @@
- README #
+ README Assignment 2 in IMT2681-2018
+
 
 ### What is this repository for? ###
-Assignment 2 in IMT2681-2018
+An online service that will allow users to browse information about IGC files(international file format used by paragliders). The program will store IGC files metadata in a mongoDB Database. The system will generate events and it will monitor for new events happening from the outside services. The project will make use of Heroku and OpenStack.
 
-Assignment URL: https://calm-mesa-59678.herokuapp.com/paragliding
+Se [specs](https://github.com/isberg1/REST-API-IMT2681_assignment_2_paragliding/blob/master/Assignment%202%20spesifications.md) for assignment requirements
+
+
+
+
+Assignment URL: https://calm-mesa-59678.herokuapp.com/paragliding (no longer supported)
 
 ### How do I test the remote Heroku api ###
 
@@ -157,7 +163,7 @@ go test:
 
 # choices and decisions
 
-i choose the  globalsign/mgo driver because i found better documentation
+i choose the globalsign/mgo driver because i found better documentation for it
 
 
 in order to check what webhocks should be posted to, i made a counter in the webhook document
