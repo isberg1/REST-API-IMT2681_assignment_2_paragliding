@@ -4,7 +4,7 @@
 ### What is this repository for? ###
 An online service that will allow users to browse information about IGC files(international file format used by paragliders). The program will store IGC files metadata in a mongoDB Database. The system will generate events and it will monitor for new events happening from the outside services. The project will make use of Heroku and OpenStack.
 
-Se [specs](https://github.com/isberg1/REST-API-IMT2681_assignment_2_paragliding/blob/master/Assignment%202%20spesifications.md) for assignment requirements
+Click [here](https://github.com/isberg1/REST-API-IMT2681_assignment_2_paragliding/blob/master/Assignment%202%20spesifications.md) for assignment requirements
 
 
 
